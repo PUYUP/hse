@@ -9,6 +9,7 @@ ALLOWED_HOSTS = [
     'localhost', 
     '127.0.0.1', 
     '[::1]',
+    'hse-backend.herokuapp.com'
 ]
 
 
@@ -44,13 +45,13 @@ X_FRAME_OPTIONS = 'DENY'
 # Django csrf
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/2.2/ref/csrf/
-CSRF_COOKIE_DOMAIN = '.sarankita.com'
+CSRF_COOKIE_DOMAIN = '.hse-backend.herokuapp.com.com'
 CSRF_HEADER_NAME = 'HTTP_X_CSRFTOKEN'
 CSRF_COOKIE_SECURE = True
 CSRF_USE_SESSIONS = False
 CSRF_COOKIE_HTTPONLY = False
 CSRF_TRUSTED_ORIGINS = [
-    '.sarankita.com'
+    '.hse-backend.herokuapp.com.com'
 ]
 """
 
@@ -61,7 +62,7 @@ CSRF_TRUSTED_ORIGINS = [
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 # CORS_ALLOWED_ORIGINS = [
-#     'http://sarankita.com'
+#     'http://hse-backend.herokuapp.com.com'
 # ]
 
 
