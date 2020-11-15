@@ -1,2 +1,2 @@
 web: gunicorn setup.wsgi --log-file -
-worker: celery -A hse worker -l info
+worker: celery -A setup worker -l info
