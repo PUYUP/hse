@@ -25,6 +25,12 @@ sentry_sdk.init(
 )
 
 
+# REDIS
+REDIS_HOST = 'ec2-52-54-199-169.compute-1.amazonaws.com'
+REDIS_PORT = '24749'
+REDIS_URL = 'redis://:pe9b3012053f01e09fc8d209daccf5cdac1606cb98de504dd89ad7ce40338f91d@ec2-52-54-199-169.compute-1.amazonaws.com:24749'
+
+
 """
 # Django Sessions
 # ------------------------------------------------------------------------------
