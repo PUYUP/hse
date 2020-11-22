@@ -1,7 +1,6 @@
 from rest_framework import serializers
 
 from utils.generals import get_model
-from utils.mixin.validators import CleanValidateMixin
 from utils.mixin.api import (
     DynamicFieldsModelSerializer, 
     ListSerializerUpdateMappingField, 
@@ -13,6 +12,7 @@ QuizQuestion = get_model('training', 'QuizQuestion')
 Choice = get_model('training', 'Choice')
 Answer = get_model('training', 'Answer')
 Simulation = get_model('training', 'Simulation')
+SimulationQuiz = get_model('training', 'SimulationQuiz')
 Course = get_model('training', 'Course')
 CourseQuiz = get_model('training', 'CourseQuiz')
 Quiz = get_model('training', 'Quiz')
@@ -34,6 +34,7 @@ class QuestionSerializer(serializers.ModelSerializer):
 
 
 class QuizQuestionSerializer(serializers.ModelSerializer):
+    quiz = serializers.SlugRelatedField(slug_field='uuid', read_only=True)
     question = QuestionSerializer(read_only=True)
     answer_uuid = serializers.UUIDField(read_only=True)
     answer_choice_uuid = serializers.UUIDField(read_only=True)
@@ -42,19 +43,15 @@ class QuizQuestionSerializer(serializers.ModelSerializer):
         model = QuizQuestion
         fields = '__all__'
 
-    def to_representation(self, value):
-        ret = super().to_representation(value)
-        return ret
-
 
 class AnswerListSerializer(ListSerializerUpdateMappingField, serializers.ListSerializer):
     pass
 
 
-class AnswerSerializer(DynamicFieldsModelSerializer, CleanValidateMixin,
-                       WritetableFieldPutMethod, serializers.ModelSerializer):
+class AnswerSerializer(DynamicFieldsModelSerializer, WritetableFieldPutMethod, serializers.ModelSerializer):
     learner = serializers.SlugRelatedField(slug_field='uuid', queryset=User.objects.all())
     simulation = serializers.SlugRelatedField(slug_field='uuid', queryset=Simulation.objects.all())
+    simulation_quiz = serializers.SlugRelatedField(slug_field='uuid', queryset=SimulationQuiz.objects.all())
     course = serializers.SlugRelatedField(slug_field='uuid', queryset=Course.objects.all())
     course_quiz = serializers.SlugRelatedField(slug_field='uuid', queryset=CourseQuiz.objects.all())
     quiz = serializers.SlugRelatedField(slug_field='uuid', queryset=Quiz.objects.all())

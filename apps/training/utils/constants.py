@@ -1,9 +1,9 @@
 from django.utils.translation import gettext_lazy as _
 
 
-BEFORE = 'before'
-AFTER = 'after'
+SURVEY = 'survey'
+EVALUATE = 'evaluate'
 POSITION_CHOICES = (
-    (BEFORE, _("Before")),
-    (AFTER, _("After")),
+    (SURVEY, _("Survey")),
+    (EVALUATE, _("Evaluate")),
 )

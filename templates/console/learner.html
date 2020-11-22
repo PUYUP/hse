@@ -1,0 +1,37 @@
+{% extends 'console/base.html' %}
+
+{% block content %}
+    <table class="table table-striped mt-4 bg-white">
+        <thead>
+            <tr>
+                <th>No.</th>
+                <th>Name</th>
+                <th>Alamat Email</th>
+                <th>Tanggal Lahir</th>
+                <th>No. Telp</th>
+                <th>Nama Perusahaan</th>
+                <th>Jabatan Pekerjaan</th>
+                <th>Score Tertinggi Sebelum Menonton video</th>
+                <th>Score Tertinggi Setelah Menonton Video</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for item in users %}
+                <tr>    
+                    <td>{{ item.id }}</td>
+                    <td>{{ item.first_name }}</td>
+                    <td>{{ item.email }}</td>
+                    <td>{{ item.profile.birthdate }}</td>
+                    <td>{{ item.account.msisdn }}</td>
+                    <td>{{ item.profile.company }}</td>
+                    <td>{{ item.profile.position }}</td>
+                    <td></td>
+                    <td></td>
+                    <td><a href="" class="btn btn-sm btn-warning">Detail</a></td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

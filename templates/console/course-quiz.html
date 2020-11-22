@@ -1,0 +1,11 @@
+{% extends 'console/base.html' %}
+
+{% block content %}
+    <h3>{{ obj.label }}</h3>
+
+    <div class="block">
+        <a href="" class="btn btn-primary btn-sm pl-4 pr-4">Add {% if position == 'survey' %}Survey{% else %}Evaluate{% endif %} Question</a>
+    </div>
+
+    
+{% endblock %}

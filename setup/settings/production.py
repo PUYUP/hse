@@ -9,7 +9,8 @@ ALLOWED_HOSTS = [
     'localhost', 
     '127.0.0.1', 
     '[::1]',
-    'hse-backend.herokuapp.com'
+    '139.59.247.46',
+    'hse-demo-fc87c.firebaseapp.com'
 ]
 
 
@@ -86,12 +87,15 @@ MEDIA_ROOT = os.path.join(PROJECT_PATH, 'media')
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'd4epaf8kv7gr4b',
-        'USER': 'ddellvrmgrcccq',
-        'PASSWORD': 'eab248d9dc9a029a76b376cfbd57793d7b3121991041e95d6a199d140fe47bf8',
-        'HOST': 'ec2-54-147-126-202.compute-1.amazonaws.com',
-        'PORT': '5432'
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'hse_db',
+        'USER': 'hse_db_user',
+        'PASSWORD': '6+Zwx37G3)EhSx',
+        'HOST': '127.0.0.1',   # Or an IP Address that your DB is hosted on
+        'PORT': '',
+        'OPTIONS': {
+            'sql_mode': 'STRICT_TRANS_TABLES',
+        }
     }
 }
 

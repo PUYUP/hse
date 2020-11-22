@@ -62,12 +62,12 @@ if not is_model_registered('training', 'Course'):
 
 
 # 7
-if not is_model_registered('training', 'CourseDate'):
-    class CourseDate(AbstractCourseDate):
-        class Meta(AbstractCourseDate.Meta):
-            db_table = 'training_course_date'
+if not is_model_registered('training', 'CourseSession'):
+    class CourseSession(AbstractCourseSession):
+        class Meta(AbstractCourseSession.Meta):
+            db_table = 'training_course_session'
 
-    __all__.append('CourseDate')
+    __all__.append('CourseSession')
 
 
 # 8
@@ -107,6 +107,15 @@ if not is_model_registered('training', 'Enroll'):
 
 
 # 12
+if not is_model_registered('training', 'EnrollSession'):
+    class EnrollSession(AbstractEnrollSession):
+        class Meta(AbstractEnrollSession.Meta):
+            db_table = 'training_enroll_session'
+
+    __all__.append('EnrollSession')
+
+
+# 13
 if not is_model_registered('training', 'Simulation'):
     class Simulation(AbstractSimulation):
         class Meta(AbstractSimulation.Meta):
@@ -115,7 +124,7 @@ if not is_model_registered('training', 'Simulation'):
     __all__.append('Simulation')
 
 
-# 13
+# 14
 if not is_model_registered('training', 'SimulationChapter'):
     class SimulationChapter(AbstractSimulationChapter):
         class Meta(AbstractSimulationChapter.Meta):
@@ -124,7 +133,7 @@ if not is_model_registered('training', 'SimulationChapter'):
     __all__.append('SimulationChapter')
 
 
-# 14
+# 15
 if not is_model_registered('training', 'SimulationQuiz'):
     class SimulationQuiz(AbstractSimulationQuiz):
         class Meta(AbstractSimulationQuiz.Meta):
@@ -133,7 +142,7 @@ if not is_model_registered('training', 'SimulationQuiz'):
     __all__.append('SimulationQuiz')
 
 
-# 15
+# 16
 if not is_model_registered('training', 'Answer'):
     class Answer(AbstractAnswer):
         class Meta(AbstractAnswer.Meta):
@@ -142,7 +151,7 @@ if not is_model_registered('training', 'Answer'):
     __all__.append('Answer')
 
 
-# 16
+# 17
 if not is_model_registered('training', 'Certificate'):
     class Certificate(AbstractCertificate):
         class Meta(AbstractCertificate.Meta):

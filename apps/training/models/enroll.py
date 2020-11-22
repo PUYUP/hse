@@ -4,7 +4,7 @@ from django.db import models
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
-from ..utils.constants import AFTER, BEFORE
+from ..utils.constants import EVALUATE, SURVEY
 
 
 class AbstractEnroll(models.Model):
@@ -16,8 +16,6 @@ class AbstractEnroll(models.Model):
                                 related_name='enroll')
     course = models.ForeignKey('training.Course', on_delete=models.CASCADE,
                                related_name='enroll')
-    course_date = models.ForeignKey('training.CourseDate', on_delete=models.CASCADE,
-                                    related_name='enroll')
 
     class Meta:
         abstract = True
@@ -25,9 +23,36 @@ class AbstractEnroll(models.Model):
         ordering = ['-create_date']
         verbose_name = _("Enroll")
         verbose_name_plural = _("Enrolls")
+        constraints = [
+            models.UniqueConstraint(
+                fields=['learner', 'course'], 
+                name='unique_enroll'
+            )
+        ]
 
     def __str__(self):
         return self.course.label
+
+
+class AbstractEnrollSession(models.Model):
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    create_date = models.DateTimeField(auto_now_add=True, null=True)
+    update_date = models.DateTimeField(auto_now=True, null=True)
+
+    enroll = models.ForeignKey('training.Enroll', on_delete=models.CASCADE,
+                               related_name='enroll_session')
+    course_session = models.ForeignKey('training.CourseSession', on_delete=models.CASCADE,
+                                       related_name='enroll_session')
+
+    class Meta:
+        abstract = True
+        app_label = 'training'
+        ordering = ['-create_date']
+        verbose_name = _("Enroll Session")
+        verbose_name_plural = _("Enroll Sessions")
+
+    def __str__(self):
+        return self.enroll.course.label
 
 
 class AbstractSimulation(models.Model):
@@ -43,10 +68,14 @@ class AbstractSimulation(models.Model):
                                 related_name='simulation')
     enroll = models.ForeignKey('training.Enroll', on_delete=models.CASCADE,
                                related_name='simulation')
+    enroll_session = models.ForeignKey('training.EnrollSession', on_delete=models.CASCADE,
+                                       related_name='simulation')
     course = models.ForeignKey('training.Course', on_delete=models.CASCADE,
                                related_name='simulation')
+    course_session = models.ForeignKey('training.CourseSession', on_delete=models.CASCADE,
+                                       related_name='simulation')
 
-    repeat_number = models.IntegerField(default=1)
+    repeated = models.IntegerField(default=1)
     is_done = models.BooleanField(default=False)
 
     class Meta:
@@ -61,7 +90,7 @@ class AbstractSimulation(models.Model):
 
     def save(self, *args, **kwargs):
         old_objs = self.__class__.objects.filter(learner=self.learner, enroll=self.enroll,
-                                                 course=self.course)
+                                                 enroll_session=self.enroll_session, course=self.course)
 
         # Mark old simulation as Done if new simulation created
         old_objs_not_done = old_objs.filter(is_done=False)
@@ -69,7 +98,7 @@ class AbstractSimulation(models.Model):
             old_objs_not_done.update(is_done=True)
 
         if not self.pk:
-            self.repeat_number = old_objs.count() + 1
+            self.repeated = old_objs.count() + 1
 
         super().save(*args, **kwargs)
 
@@ -83,6 +112,8 @@ class AbstractSimulationChapter(models.Model):
                                    related_name='simulation_chapter')
     course = models.ForeignKey('training.Course', on_delete=models.CASCADE,
                                related_name='simulation_chapter')
+    course_session = models.ForeignKey('training.CourseSession', on_delete=models.CASCADE,
+                                       related_name='simulation_chapter')
     chapter = models.ForeignKey('training.Chapter', on_delete=models.CASCADE,
                                 related_name='simulation_chapter')
 
@@ -94,9 +125,15 @@ class AbstractSimulationChapter(models.Model):
         ordering = ['-create_date']
         verbose_name = _("Simulation Chapter")
         verbose_name_plural = _("Simulation Chapters")
+        constraints = [
+            models.UniqueConstraint(
+                fields=['simulation', 'course', 'course_session', 'chapter'], 
+                name='unique_simulation_chapter'
+            )
+        ]
 
     def __str__(self):
-        return self.course_chapter.label
+        return self.chapter.label
 
 
 class AbstractSimulationQuiz(models.Model):
@@ -132,12 +169,12 @@ class AbstractSimulationQuiz(models.Model):
         return self.quiz.label
 
     @property
-    def is_before(self):
-        return self.course_quiz.position == BEFORE
+    def is_survey(self):
+        return self.course_quiz.position == SURVEY
 
     @property
-    def is_after(self):
-        return self.course_quiz.position == AFTER
+    def is_evaluate(self):
+        return self.course_quiz.position == EVALUATE
 
 
 class AbstractAnswer(models.Model):
@@ -149,6 +186,8 @@ class AbstractAnswer(models.Model):
                                 related_name='answer')
     simulation = models.ForeignKey('training.Simulation', on_delete=models.CASCADE,
                                    related_name='answer')
+    simulation_quiz = models.ForeignKey('training.SimulationQuiz', on_delete=models.CASCADE,
+                                        related_name='answer')
     course = models.ForeignKey('training.Course', on_delete=models.CASCADE,
                                related_name='answer')
     course_quiz = models.ForeignKey('training.CourseQuiz', on_delete=models.CASCADE,

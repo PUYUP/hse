@@ -11,19 +11,22 @@ SimulationChapter = get_model('training', 'SimulationChapter')
 
 
 @transaction.atomic
-def enroll_save_handler(sender, instance, created, **kwargs):
+def enroll_session_save_handler(sender, instance, created, **kwargs):
     if created:
         """
-        After enroll save
+        Evaluate enroll save
         Create first simulation and first progress as quiz
         """
-        learner = instance.learner
-        course = instance.course
+        enroll = instance.enroll
+        learner = enroll.learner
+        course = enroll.course
+        course_session = instance.course_session
 
         # First simulation.
-        simulation = Simulation.objects.create(learner=learner, course=course, enroll=instance)
+        simulation = Simulation.objects.create(learner=learner, course=course, course_session=course_session,
+                                               enroll=enroll, enroll_session=instance)
 
-        # Simulation quiz before
-        course_quiz = CourseQuiz.objects.get(course__id=course.id, position='before')
+        # Simulation quiz survey
+        course_quiz = CourseQuiz.objects.get(course__id=course.id, position='survey')
         SimulationQuiz.objects.create(simulation=simulation, course=course, course_quiz=course_quiz,
                                       quiz=course_quiz.quiz)

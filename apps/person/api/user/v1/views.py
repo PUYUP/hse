@@ -331,6 +331,42 @@ class UserApiView(viewsets.ViewSet):
                 {'detail': _(u"Akun `{account}` tidak ditemukan".format(account=account))}
             )
 
+    # Sub-action check User
+    @method_decorator(never_cache)
+    @transaction.atomic
+    @action(methods=['post'], detail=False, permission_classes=[AllowAny],
+            url_path='check-user', url_name='check-user')
+    def check_user(self, request):
+        """
+        POST
+        ------------------
+
+        Param:
+
+            {
+                "first_name": "string",
+                "msisdn": "string",
+                "email": "string",
+                "birthplace": "string",
+                "birthdate": "yyyy-mm-dd",
+            }
+        """
+        data = request.data
+        first_name = data.get('first_name', None)
+        msisdn = data.get('msisdn', None)
+        email = data.get('email', None)
+        birthplace = data.get('birthplace', None)
+        birthdate = data.get('birthdate', None)
+
+        try:
+            user = User.objects.get(first_name=first_name, email=email, account__msisdn=msisdn,
+                                    profile__birthplace=birthplace, profile__birthdate=birthdate)
+            return Response({'uuid': user.uuid}, status=response_status.HTTP_200_OK)
+        except ValidationError as e:
+            raise NotAcceptable(detail=repr(e))
+        except ObjectDoesNotExist:
+            raise NotFound({'detail': _(u"User tidak ditemukan")})
+
     # Sub-action check email available
     @method_decorator(never_cache)
     @transaction.atomic
@@ -497,6 +533,67 @@ class UserApiView(viewsets.ViewSet):
 
         return Response({'detail': _(u"Kata sandi berhasil diperbarui. "
                                      "Silahkan masuk dengan kata sandi baru")},
+                        status=response_status.HTTP_200_OK)
+
+    # Password recovery as guest
+    @method_decorator(never_cache)
+    @transaction.atomic
+    @action(methods=['post'], detail=False, permission_classes=[AllowAny],
+            url_path='password-recovery-partial', url_name='password-recovery-partial')
+    def password_recovery_partial(self, request):
+        """
+        POST
+        ------------------
+
+        Param:
+
+            {
+                "password1": "string",
+                "password2": "string",
+                "first_name": "string",
+                "msisdn": "string",
+                "email": "string",
+                "birthplace": "string",
+                "birthdate": "yyyy-mm-dd"
+            }
+        """
+        user = None
+        data = request.data
+        password1 = data.get('password1')
+        password2 = data.get('password2')
+        first_name = data.get('first_name', None)
+        msisdn = data.get('msisdn', None)
+        email = data.get('email', None)
+        birthplace = data.get('birthplace', None)
+        birthdate = data.get('birthdate', None)
+
+        # check password confirmation
+        if password1 and password2:
+            if password1 != password2:
+                raise NotAcceptable(detail=_(u"Kata sandi tidak sama"))
+        else:
+            raise NotAcceptable(detail=_(u"Kata sandi tidak boleh kosong"))
+
+        # validate password
+        try:
+            validate_password(password2)
+        except ValidationError as e:
+            raise NotAcceptable(detail=' '.join(e.messages))
+
+        try:
+            user = User.objects.get(first_name=first_name, email=email, account__msisdn=msisdn,
+                                    profile__birthplace=birthplace, profile__birthdate=birthdate)
+        except ValidationError as e:
+            raise NotAcceptable(detail=repr(e))
+        except ObjectDoesNotExist:
+            raise NotFound({'detail': _(u"User tidak ditemukan")})
+
+        # set password
+        user.set_password(password2)
+        user.save()
+
+        return Response({'detail': _(u"PIN berhasil diperbarui. "
+                                     "Silahkan masuk dengan PIN baru")},
                         status=response_status.HTTP_200_OK)
 
     # Sub-action logout!

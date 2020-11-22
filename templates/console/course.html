@@ -1,0 +1,30 @@
+{% extends 'console/base.html' %}
+
+{% block content %}
+    <div class="block">
+        <a href="{% url 'course_editor' %}" class="btn btn-primary btn-sm pl-4 pr-4">Add Campaign</a>
+    </div>
+
+    <table class="table table-striped mt-4 bg-white">
+        <thead>
+            <tr>
+                <th>Label</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for item in objs %}
+                <tr>    
+                    <td>
+                        <a href="{% url 'course_detail' item.uuid %}">{{ item.label }}</a>
+                    </td>
+                    
+                    <td>
+                        <a href="{% url 'course_editor' item.uuid %}" class="btn btn-sm btn-warning">Edit</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

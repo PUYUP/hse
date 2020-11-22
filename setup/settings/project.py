@@ -12,6 +12,7 @@ PROJECT_URL = 'www.hse.com'
 SHORT_URL = 'www.short.url' # without backslash ('/')
 PAGINATION_PER_PAGE = 10
 LOGIN_WITH_JWT = True
+CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
 API_VERSION = 1
 API_VERSION_SLUG = 'v%s' % (API_VERSION)
@@ -25,7 +26,7 @@ STRICT_EMAIL_VERIFIED = False
 STRICT_EMAIL_DUPLICATE = True
 
 STRICT_MSISDN = True
-STRICT_MSISDN_VERIFIED = True
+STRICT_MSISDN_VERIFIED = False
 STRICT_MSISDN_DUPLICATE = True
 
 LOGOUT_REDIRECT_URL = '/'
@@ -35,6 +36,7 @@ LOGIN_URL = '/person/login/'
 # Application definition
 PROJECT_APPS = [
     'corsheaders',
+    'crispy_forms',
     'rest_framework',
     'apps.person.apps.PersonConfig',
     'apps.training.apps.TrainingConfig',

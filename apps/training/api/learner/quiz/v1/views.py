@@ -17,6 +17,7 @@ from utils.pagination import build_result_pagination
 
 QuizQuestion = get_model('training', 'QuizQuestion')
 Answer = get_model('training', 'Answer')
+SimulationQuiz = get_model('training', 'SimulationQuiz')
 
 # Define to avoid used ...().paginate__
 _PAGINATOR = LimitOffsetPagination()
@@ -26,9 +27,14 @@ class QuizQuestionApiView(viewsets.ViewSet):
     lookup_field = 'uuid'
     permission_classes = (IsAuthenticated,)
 
+    def initialize_request(self, request, *args, **kwargs):
+        self.simulation_uuid = None
+        return super().initialize_request(request, *args, **kwargs)
+
     def queryset(self):
         answer = Answer.objects.filter(question__uuid=OuterRef('question__uuid'),
-                                       quiz__uuid=OuterRef('quiz__uuid'))
+                                       quiz__uuid=OuterRef('quiz__uuid'),
+                                       simulation__uuid=self.simulation_uuid)
 
         qs = QuizQuestion.objects.prefetch_related('question', 'quiz') \
             .select_related('question', 'quiz') \
@@ -50,6 +56,7 @@ class QuizQuestionApiView(viewsets.ViewSet):
     def list(self, request, format=None):
         context = {'request': request}
         quiz_uuid = request.query_params.get('quiz_uuid', None)
+        self.simulation_uuid = request.query_params.get('simulation_uuid', None)
 
         try:
             queryset = self.queryset().filter(quiz__uuid=quiz_uuid)
@@ -136,6 +143,32 @@ class AnswerApiView(viewsets.ViewSet):
         if serializer.is_valid(raise_exception=True):
             try:
                 serializer.save()
+                
+                # Prepare mark simulation quiz done
+                simulation = None
+                quiz = None
+                course = None
+                course_quiz = None
+                simulation_quiz_obj = None
+
+                for d in serializer.data:
+                    simulation = dict(d).get('simulation')
+                    quiz = dict(d).get('quiz')
+                    course = dict(d).get('course')
+                    course_quiz = dict(d).get('course_quiz')
+                    break
+                
+                try:
+                    simulation_quiz_obj = SimulationQuiz.objects \
+                        .get(simulation__uuid=simulation, quiz__uuid=quiz,
+                             course__uuid=course, course_quiz__uuid=course_quiz)
+                except ObjectDoesNotExist:
+                    pass
+                
+                if simulation_quiz_obj:
+                    simulation_quiz_obj.is_done = True
+                    simulation_quiz_obj.save()
+
             except (ValidationError, Exception) as e:
                 raise NotAcceptable(detail=str(e))
             return Response(serializer.data, status=response_status.HTTP_200_OK)

@@ -65,7 +65,7 @@ class AbstractQuiz(models.Model):
     creator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
                                 null=True, blank=True, related_name='quiz')
 
-    label = models.CharField(max_length=255, help_text=_("Ex: Quiz before training [name training]"))
+    label = models.CharField(max_length=255, help_text=_("Ex: Quiz survey training [name training]"))
 
     class Meta:
         abstract = True

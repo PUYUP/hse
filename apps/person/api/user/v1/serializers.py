@@ -1,12 +1,12 @@
-
 from django.conf import settings
 from django.db import transaction, IntegrityError
 from django.db.models import Prefetch
-from django.db.models.query import QuerySet
 from django.contrib import messages
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
+from django.db.models.query import QuerySet
 from django.utils.translation import ugettext_lazy as _
+from django.utils.text import slugify
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import EmailValidator
 
@@ -14,7 +14,6 @@ from rest_framework import serializers
 
 # PROJECT UTILS
 from utils.generals import get_model
-from utils.mixin.validators import CleanValidateMixin
 from utils.validators import non_python_keyword, identifier_validator
 
 from apps.person.api.validator import (
@@ -23,6 +22,7 @@ from apps.person.api.validator import (
     MSISDNNumberValidator,
     PasswordValidator
 )
+
 from ...account.v1.serializers import AccountSerializer
 from ...profile.v1.serializers import ProfileSerializer
 
@@ -32,10 +32,15 @@ VerifyCode = get_model('person', 'VerifyCode')
 Role = get_model('person', 'Role')
 
 
-class RoleSerializer(CleanValidateMixin, serializers.ModelSerializer):
+class RoleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Role
         fields = ('identifier',)
+
+    def validate(self, attrs):
+        instance = self.Meta.model(**attrs)
+        instance.clean(from_restful=True)
+        return attrs
 
 
 class DynamicFieldsModelSerializer(serializers.ModelSerializer):
@@ -183,6 +188,7 @@ class UserSerializer(DynamicFieldsModelSerializer, serializers.ModelSerializer):
         data.pop('token', None)
         data.pop('password1', None)
         data.pop('password2', None)
+        data.pop('msisdn', None)
 
         # set is_active to True
         # if False user can't loggedin
@@ -266,12 +272,17 @@ class UserSerializer(DynamicFieldsModelSerializer, serializers.ModelSerializer):
     @transaction.atomic
     def create(self, validated_data):
         self.role = validated_data.pop('role')
+
         first_name = validated_data.get('first_name', None)
-        username = validated_data.get('user_name', None)
-        
+        username = validated_data.get('username', None)
+
         # use username as first_name if first_name not exist
         if first_name is None:
             validated_data['first_name'] = username
+
+        # generate username if None
+        if username is None:
+            validated_data['username'] = slugify(self.msisdn)
 
         try:
             user = User.objects.create_user(**validated_data)
@@ -285,10 +296,12 @@ class UserSerializer(DynamicFieldsModelSerializer, serializers.ModelSerializer):
             account = getattr(user, 'account')
             if account:
                 account.msisdn = self.msisdn
+                account.email_verified = True;
                 account.save()
             else:
                 try:
-                    Account.objects.create(user=user, msisdn=self.msisdn)
+                    Account.objects.create(user=user, msisdn=self.msisdn,
+                                           msisdn_verified=True, email_verified=True)
                 except IntegrityError:
                     pass
 

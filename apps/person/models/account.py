@@ -56,10 +56,12 @@ class AbstractProfile(models.Model):
     create_date = models.DateTimeField(auto_now_add=True, null=True)
     update_date = models.DateTimeField(auto_now=True, null=True)
 
-    headline = models.CharField(max_length=255, null=True, blank=True)
+    position = models.CharField(max_length=255, null=True, blank=True)
+    company = models.CharField(max_length=255, null=True, blank=True)
     gender = models.CharField(choices=GENDER_CHOICES, blank=True, null=True,
                               default=UNDEFINED, max_length=255,
                               validators=[identifier_validator, non_python_keyword])
+    birthplace = models.CharField(blank=True, null=True, max_length=255)
     birthdate = models.DateField(blank=True, null=True)
     about = models.TextField(blank=True, null=True)
     picture = models.ImageField(upload_to=_UPLOAD_TO, max_length=500,

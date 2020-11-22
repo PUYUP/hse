@@ -23,17 +23,29 @@ class RootApiView(APIView):
             'training': {
                 'learner': {
                     'courses': reverse('training_api:learner:course-list', request=request,
-                                       format=format, current_app='helpdesk_api:client'),
+                                       format=format, current_app='training_api:learner'),
                     'coursequizs': reverse('training_api:learner:coursequiz-list', request=request,
-                                            format=format, current_app='helpdesk_api:client'),
+                                            format=format, current_app='training_api:learner'),
                     'enrolls': reverse('training_api:learner:enroll-list', request=request,
-                                       format=format, current_app='helpdesk_api:client'),
+                                       format=format, current_app='training_api:learner'),
                     'simulations': reverse('training_api:learner:simulation-list', request=request,
-                                           format=format, current_app='helpdesk_api:client'),
+                                           format=format, current_app='training_api:learner'),
+                    'simulationchapters': reverse('training_api:learner:simulationchapter-list', request=request,
+                                                  format=format, current_app='training_api:learner'),
+                    'simulationquizs': reverse('training_api:learner:simulationquiz-list', request=request,
+                                               format=format, current_app='training_api:learner'),
                     'quizquestions': reverse('training_api:learner:quizquestion-list', request=request,
-                                             format=format, current_app='helpdesk_api:client'),
+                                             format=format, current_app='training_api:learner'),
                     'answers': reverse('training_api:learner:answer-list', request=request,
-                                       format=format, current_app='helpdesk_api:client'),
+                                       format=format, current_app='training_api:learner'),
+                    'chapters': reverse('training_api:learner:chapter-list', request=request,
+                                        format=format, current_app='training_api:learner'),
+                },
+                'instructor': {
+                    'courses': reverse('training_api:instructor:course-list', request=request,
+                                       format=format, current_app='training_api:instructor'),
+                    'chapters': reverse('training_api:instructor:chapter-list', request=request,
+                                        format=format, current_app='training_api:instructor'),
                 }
             }
         })

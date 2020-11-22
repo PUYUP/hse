@@ -1,8 +1,8 @@
-import datetime
 from dateutil import parser
+from calendar import monthrange
 
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from django.db.models import Prefetch, Count, Q
+from django.db.models import Prefetch, Count, Q, Exists, OuterRef, Subquery
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
@@ -15,12 +15,15 @@ from rest_framework.pagination import LimitOffsetPagination
 from utils.generals import get_model
 from utils.pagination import build_result_pagination
 
-from .serializers import CourseSerializer, CourseQuizSerializer
+from .serializers import ChapterSerializer, CourseSerializer, CourseQuizSerializer
 
 Course = get_model('training', 'Course')
+Chapter = get_model('training', 'Chapter')
 CourseQuiz = get_model('training', 'CourseQuiz')
-CourseDate = get_model('training', 'CourseDate')
+CourseSession = get_model('training', 'CourseSession')
 Quiz = get_model('training', 'Quiz')
+Enroll = get_model('training', 'Enroll')
+SimulationChapter = get_model('training', 'SimulationChapter')
 
 # Define to avoid used ...().paginate__
 _PAGINATOR = LimitOffsetPagination()
@@ -35,36 +38,53 @@ class CourseApiView(viewsets.ViewSet):
             dt = parser.parse(start_date)
             dt_format = dt.strftime('%Y-%m-%d')
 
-            q_start_date = Q(course_date__start_date__date=dt_format)
-            q_course_date = Q(start_date__date=dt_format)
+            year = dt.strftime('%Y')
+            month = dt.strftime('%m')
+            day_start, day_end = monthrange(int(year), int(month))
+            date_end = parser.parse('{}-{}-{}'.format(year, month, day_end))
+            date_end_format = date_end.strftime('%Y-%m-%d')
+
+            q_start_date = Q(course_session__start_date__range=(dt_format, date_end_format))
+            q_course_session = Q(start_date__range=(dt_format, date_end_format))
         else:
             today = timezone.datetime.today().strftime('%Y-%m-%d')
-            q_start_date = Q(course_date__start_date__gte=today)
-            q_course_date = Q(start_date__gte=today)
+            q_start_date = Q(course_session__start_date__gte=today)
+            q_course_session = Q(start_date__gte=today)
         
-        course_date_objs = CourseDate.objects.filter(q_course_date).order_by('start_date')
+        course_session_objs = CourseSession.objects.filter(q_course_session).order_by('start_date')
+        enroll_obj = Enroll.objects.filter(course__uuid=OuterRef('uuid'),
+                                           learner_id=self.request.user.id)
 
         qs = Course.objects \
-            .prefetch_related('creator', 'category', Prefetch('course_date', queryset=course_date_objs)) \
+            .prefetch_related('creator', 'category', 'chapter', Prefetch('course_session', queryset=course_session_objs)) \
             .select_related('creator', 'category') \
             .annotate(
-                course_date_count=Count(
-                    'course_date', 
+                course_session_count=Count(
+                    'course_session', 
                     filter=q_start_date,
                     distinct=True
-                )
+                ),
+                enroll_uuid=Subquery(enroll_obj.values('uuid')),
+                is_enrolled=Exists(enroll_obj)
             ) \
-            .filter(is_active=True, course_date_count__gt=0)
-
+            .filter(is_active=True, course_session_count__gt=0)
+    
         return qs
 
     def list(self, request, format=None):
         context = {'request': request}
         start_date = request.query_params.get('start_date', None)
+        keyword = request.query_params.get('keyword', None)
 
         queryset = self.queryset(start_date=start_date)
+        
+        if keyword:
+            queryset = queryset.filter(label__icontains=keyword)
+
         queryset_paginator = _PAGINATOR.paginate_queryset(queryset, request)
-        serializer = CourseSerializer(queryset_paginator, many=True, context=context)
+        serializer = CourseSerializer(queryset_paginator, many=True, context=context,
+                                      fields_used=['url', 'uuid', 'enroll_uuid', 'is_enrolled',
+                                                   'label', 'course_session', 'cover'])
         pagination_result = build_result_pagination(self, _PAGINATOR, serializer)
 
         return Response(pagination_result, status=response_status.HTTP_200_OK)
@@ -116,4 +136,35 @@ class CourseQuizApiView(viewsets.ViewSet):
             raise NotAcceptable(detail=repr(e))
     
         serializer = CourseQuizSerializer(queryset, many=False, context=context)
+        return Response(serializer.data, status=response_status.HTTP_200_OK)
+
+
+class ChapterApiView(viewsets.ViewSet):
+    lookup_field = 'uuid'
+    permission_classes = (IsAuthenticated,)
+
+    def initialize_request(self, request, *args, **kwargs):
+        self.simulation_uuid = request.GET.get('simulation_uuid')
+        return super().initialize_request(request, *args, **kwargs)
+
+    def queryset(self):
+        qs = Chapter.objects \
+            .prefetch_related('course') \
+            .select_related('course')
+
+        return qs
+
+    def list(self, request, format=None):
+        context = {'request': request}
+        return Response({}, status=response_status.HTTP_200_OK)
+
+    def retrieve(self, request, uuid=None, format=None):
+        context = {'request': request}
+    
+        try:
+            queryset = self.queryset().get(uuid=uuid)
+        except (ObjectDoesNotExist, ValidationError) as e:
+            raise NotAcceptable(detail=repr(e))
+    
+        serializer = ChapterSerializer(queryset, many=False, context=context)
         return Response(serializer.data, status=response_status.HTTP_200_OK)

@@ -8,9 +8,9 @@ class TrainingConfig(AppConfig):
     def ready(self):
         from utils.generals import get_model
 
-        from .singals import enroll_save_handler
+        from .singals import enroll_session_save_handler
 
-        Enroll = get_model('training', 'Enroll')
+        EnrollSession = get_model('training', 'EnrollSession')
 
-        post_save.connect(enroll_save_handler, sender=Enroll,
-                          dispatch_uid='enroll_save_signal')
+        post_save.connect(enroll_session_save_handler, sender=EnrollSession,
+                          dispatch_uid='enroll_session_save_signal')

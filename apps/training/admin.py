@@ -8,11 +8,12 @@ Quiz = get_model('training', 'Quiz')
 QuizQuestion = get_model('training', 'QuizQuestion')
 Category = get_model('training', 'Category')
 Course = get_model('training', 'Course')
-CourseDate = get_model('training', 'CourseDate')
+CourseSession = get_model('training', 'CourseSession')
 Chapter = get_model('training', 'Chapter')
 Material = get_model('training', 'Material')
 CourseQuiz = get_model('training', 'CourseQuiz')
 Enroll = get_model('training', 'Enroll')
+EnrollSession = get_model('training', 'EnrollSession')
 Simulation = get_model('training', 'Simulation')
 SimulationChapter = get_model('training', 'SimulationChapter')
 SimulationQuiz = get_model('training', 'SimulationQuiz')
@@ -38,13 +39,13 @@ class ChapterInline(admin.StackedInline):
     model = Chapter
 
 
-class CourseDateInline(admin.StackedInline):
-    model = CourseDate
+class CourseSessionInline(admin.StackedInline):
+    model = CourseSession
 
 
 class CourseExtend(admin.ModelAdmin):
     model = Course
-    inlines = [ChapterInline, CourseDateInline,]
+    inlines = [ChapterInline, CourseSessionInline,]
 
 
 class MaterialInline(admin.StackedInline):
@@ -63,8 +64,17 @@ class MaterialInline(admin.StackedInline):
 
 class ChapterExtend(admin.ModelAdmin):
     model = Chapter
-    list_display = ('label', 'course',)
+    list_display = ('label', 'course', 'sort_order',)
     inlines = [MaterialInline,]
+
+
+class EnrollSessionInline(admin.StackedInline):
+    model = EnrollSession
+
+
+class EnrollExtend(admin.ModelAdmin):
+    model = Enroll
+    inlines = [EnrollSessionInline,]
 
 
 admin.site.register(Question, QuestionExtend)
@@ -76,7 +86,7 @@ admin.site.register(Course, CourseExtend)
 admin.site.register(Chapter, ChapterExtend)
 admin.site.register(Material)
 admin.site.register(CourseQuiz)
-admin.site.register(Enroll)
+admin.site.register(Enroll, EnrollExtend)
 admin.site.register(Simulation)
 admin.site.register(SimulationChapter)
 admin.site.register(SimulationQuiz)

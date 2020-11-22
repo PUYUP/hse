@@ -1,0 +1,168 @@
+{% extends 'console/base.html' %}
+{% load static crispy_forms_tags %}
+
+{% block content %}
+    <div class="form-group d-flex">
+        <h3>{{ obj.label }}</h3>
+
+        <div class="pl-4">
+            <a href="{% url 'course_editor' obj.uuid %}" class="btn btn-sm btn-warning">Edit</a>
+        </div>
+    </div>
+
+    {% if obj.category %}
+        <div class="form-group">
+            <label>Category</label>
+            <div>{{ obj.category.label }}</div>
+        </div>
+    {% endif %}
+
+    {% if obj.description %}
+        <div class="form-group">
+            <label>Description</label>
+            <div>{{ obj.description }}</div>
+        </div>
+    {% endif %}
+
+    {% if obj.cover %}
+        <div class="form-group">
+            <label>Cover</label>
+
+            <div>
+                <figure>
+                    <img src="{{ obj.cover.url }}" class="w-25 h-auto">
+                </figure>
+            </div>
+        </div>
+    {% endif %}
+
+    <hr />
+
+    <button class="btn btn-sm pl-4 pr-4 btn-primary" data-course-uuid="{{ obj.uuid }}" data-toggle="modal" data-target="#chapter-modal">Add Materi</button>
+    <a href="{% url 'course_quiz' obj.uuid %}?position=survey" class="btn btn-sm pl-4 pr-4 btn-info ml-4">Add/Edit Survey Question</a>
+    <a href="{% url 'course_quiz' obj.uuid %}?position=evalueate" class="btn btn-sm pl-4 pr-4 btn-secondary ml-4">Add/Edit Evaluate Question</a>
+
+    <!-- Modal -->
+    <div class="modal fade" id="chapter-modal" data-backdrop="static" data-keyboard="false" aria-labelledby="chapter-modalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="chapter-modalLabel">Add Materi</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="label">Label</label>
+                        <input type="text" class="form-control" name="label" id="label" placeholder="E.g: Perkenalan">
+                    </div>
+
+                    <div id="upload-zone" class="form-group">
+                        <label for="fileupload">File (Video, PDF or Image)</label>
+                        <input type="file" class="form-control" name="file" id="fileupload">
+                        <div id="filename"></div>
+
+                        <div class="progress mb-2 d-none">
+                            <div class="progress-bar" role="progressbar" style="width: 25%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">25%</div>
+                        </div>
+                    </div>
+
+                    <button type="button" id="upload" class="btn btn-info pl-4 pr-4">Upload</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if chapter.exists %}
+        <hr />
+        <p class="font-weight-bold">Materi</p>
+
+        <ul class="list-unstyled">
+            {% for item in chapter %}
+                <li>{{ item.label }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endblock %}
+
+{% block js %}
+    <script src="{% static 'jquery-file-upload/jquery.iframe-transport.js' %}" defer></script>
+    <script src="{% static 'jquery-file-upload/vendor/load-image.all.min.js' %}" defer></script>
+    <script src="{% static 'jquery-file-upload/vendor/jquery.ui.widget.js' %}" defer></script>
+    <script src="{% static 'jquery-file-upload/jquery.fileupload.js' %}" defer></script>
+    <script src="{% static 'jquery-file-upload/jquery.fileupload-process.js' %}" defer></script>
+    <script src="{% static 'jquery-file-upload/jquery.fileupload-image.js' %}" defer></script>
+    <script src="{% static 'jquery-file-upload/jquery.fileupload-validate.js' %}" defer></script>
+
+    <script type="text/javascript">
+        (function() {
+            'use strict';
+            
+            window.addEventListener('DOMContentLoaded', function() {
+                // ...
+                // OPEN CHAPTER FORM
+                // ...
+                $(document).on('shown.bs.modal', '#chapter-modal', function (e) {
+                    var course_uuid = $(e.relatedTarget).attr('data-course-uuid');
+                    console.log(course_uuid);
+                });
+
+
+                // ...
+                // CREATE CHAPTER
+                // ...
+                $('#fileupload').fileupload({
+                    method: 'POST',
+                    url: API_ENDPOINT + 'training/instructor/chapters/',
+                    headers: {'X-CSRFToken': Cookies.get('csrftoken')},
+                    dataType: 'json',
+                    sequentialUploads: true,
+                    add: function (e, data) {    
+                        var fname = data?.files[0].name;
+
+                        $(e.target).closest('.form-group').find('#filename').html(`<p class="mt-2 mb-0">${fname}`);
+
+                        $("#upload").off('click').on('click', function () {
+                            data.submit();
+                        });
+                    },
+                    progress: function (e, data) {
+                        var progress = parseInt(data.loaded / data.total * 100, 10);
+                        var strProgress = progress + "%";
+                        var uploadZoneEl = $(e.target).closest('#upload-zone');
+
+                        $(uploadZoneEl).find('.progress').removeClass('d-none');
+                        $(uploadZoneEl).find('.progress-bar').css({ 'width': strProgress });
+                        $(uploadZoneEl).find('.progress-bar').text(strProgress);
+                    },
+                    done: function (e, data) {
+                        var result = data.result;
+                        var uploadZoneEl = $(e.target).closest('#upload-zone');
+
+                        $(uploadZoneEl).find('.progress').addClass('d-none');
+
+                        // Refresh page.
+                        if (result) window.location.reload();}
+                    },
+                    stop: function (e) {
+                        var uploadZoneEl = $(e.target).closest('#upload-zone');
+                        $(uploadZoneEl).find('.progress').addClass('d-none');
+                    }
+                });
+
+
+                // ...
+                // SET PARAMS
+                // ...
+                $('#fileupload').bind('fileuploadsubmit', function (e, data) {
+                    data.formData = {
+                        'course': '{{ obj.uuid }}',
+                        'label': $('#label').val(),
+                    }
+                });
+            });
+        })();
+    </script>
+{% endblock %}
