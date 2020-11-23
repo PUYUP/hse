@@ -34,17 +34,13 @@ class EnrollApiView(viewsets.ViewSet):
     lookup_field = 'uuid'
     permission_classes = (IsAuthenticated,)
 
-    def initialize_request(self, request, *args, **kwargs):
-        self.user = request.user
-        return super().initialize_request(request, *args, **kwargs)
-
     def queryset(self):
-        qs = Enroll.objects \
+        query = Enroll.objects \
             .prefetch_related('learner', 'course', 'enroll_session') \
             .select_related('learner', 'course') \
-            .filter(learner__id=self.user.id)
+            .filter(learner__id=self.request.user.id)
 
-        return qs
+        return query
 
     def get_object(self, uuid=None):
         try:
@@ -93,7 +89,7 @@ class EnrollApiView(viewsets.ViewSet):
     def destroy(self, request, uuid=None, format=None):
         queryset = self.get_object(uuid=uuid)
 
-        if queryset.learner.uuid != self.user.uuid:
+        if queryset.learner.uuid != request.user.uuid:
             raise NotAcceptable(detail=_("Restricted!"))
 
         queryset.delete()
@@ -105,15 +101,11 @@ class SimulationApiView(viewsets.ViewSet):
     lookup_field = 'uuid'
     permission_classes = (IsAuthenticated,)
 
-    def initialize_request(self, request, *args, **kwargs):
-        self.user = request.user
-        return super().initialize_request(request, *args, **kwargs)
-
     def queryset(self):
         qs = Simulation.objects \
             .prefetch_related('learner', 'enroll', 'enroll_session', 'course', 'course_session') \
             .select_related('learner', 'enroll', 'enroll_session', 'course', 'course_session') \
-            .filter(learner__id=self.user.id)
+            .filter(learner__id=self.request.user.id)
 
         return qs
 
@@ -182,7 +174,7 @@ class SimulationApiView(viewsets.ViewSet):
     def destroy(self, request, uuid=None, format=None):
         queryset = self.get_object(uuid=uuid)
 
-        if queryset.learner.uuid != self.user.uuid:
+        if queryset.learner.uuid != request.user.uuid:
             raise NotAcceptable(detail=_("Restricted!"))
 
         queryset.delete()
@@ -193,10 +185,6 @@ class SimulationApiView(viewsets.ViewSet):
 class SimulationChapterApiView(viewsets.ViewSet):
     lookup_field = 'uuid'
     permission_classes = (IsAuthenticated,)
-
-    def initialize_request(self, request, *args, **kwargs):
-        self.user = request.user
-        return super().initialize_request(request, *args, **kwargs)
 
     def queryset(self):
         qs = SimulationChapter.objects \
@@ -250,15 +238,11 @@ class SimulationQuizApiView(viewsets.ViewSet):
     lookup_field = 'uuid'
     permission_classes = (IsAuthenticated,)
 
-    def initialize_request(self, request, *args, **kwargs):
-        self.user = request.user
-        return super().initialize_request(request, *args, **kwargs)
-
     def queryset(self):
         qs = SimulationQuiz.objects \
             .prefetch_related('simulation', 'course_quiz', 'course', 'quiz', 'answer') \
             .select_related('simulation', 'course_quiz', 'course', 'quiz') \
-            .filter(simulation__learner__id=self.user.id)
+            .filter(simulation__learner__id=self.request.user.id)
 
         return qs
 
