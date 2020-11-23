@@ -126,15 +126,26 @@ class EnrollSessionSerializer(serializers.ModelSerializer):
     def get_simulation(self, obj):
         quiz = Quiz.objects \
             .filter(simulation_quiz__simulation__uuid=OuterRef('uuid')) \
-            .annotate(true_answer=Count('simulation_quiz__answer', distinct=True, filter=Q(simulation_quiz__answer__is_true=True)),
-                      total_survey_question=Count('quiz_question', distinct=True),
-                      total_evaluate_question=Count('quiz_question', distinct=True))
+            .annotate(
+                true_answer_survey=Count(
+                    'simulation_quiz__answer',
+                    distinct=True,
+                    filter=Q(simulation_quiz__answer__is_true=True, simulation_quiz__answer__course_quiz__position='survey')
+                ),
+                true_answer_evaluate=Count(
+                    'simulation_quiz__answer',
+                    distinct=True,
+                    filter=Q(simulation_quiz__answer__is_true=True, simulation_quiz__answer__course_quiz__position='evaluate')
+                ),
+                total_survey_question=Count('quiz_question', distinct=True),
+                total_evaluate_question=Count('quiz_question', distinct=True)
+            )
 
         simulation_objs = obj.simulation.prefetch_related('course', 'enroll') \
             .select_related('course', 'enroll') \
             .annotate(
-                quiz_survey_true_answer=Subquery(quiz.filter(course_quiz__position='survey').values('true_answer')[:1]),
-                quiz_evaluate_true_answer=Subquery(quiz.filter(course_quiz__position='evaluate').values('true_answer')[:1]),
+                quiz_survey_true_answer=Subquery(quiz.filter(course_quiz__position='survey').values('true_answer_survey')[:1]),
+                quiz_evaluate_true_answer=Subquery(quiz.filter(course_quiz__position='evaluate').values('true_answer_evaluate')[:1]),
                 total_survey_question=Subquery(quiz.filter(course_quiz__position='survey').values('total_survey_question')[:1]),
                 total_evaluate_question=Subquery(quiz.filter(course_quiz__position='evaluate').values('total_evaluate_question')[:1])
             ) \

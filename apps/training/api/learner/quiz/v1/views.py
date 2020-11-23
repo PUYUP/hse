@@ -29,21 +29,24 @@ class QuizQuestionApiView(viewsets.ViewSet):
 
     def initialize_request(self, request, *args, **kwargs):
         self.simulation_uuid = None
+        self.position = None
+
         return super().initialize_request(request, *args, **kwargs)
 
     def queryset(self):
         answer = Answer.objects.filter(question__uuid=OuterRef('question__uuid'),
                                        quiz__uuid=OuterRef('quiz__uuid'),
-                                       simulation__uuid=self.simulation_uuid)
+                                       simulation__uuid=self.simulation_uuid,
+                                       course_quiz__position=self.position)
 
-        qs = QuizQuestion.objects.prefetch_related('question', 'quiz') \
+        query = QuizQuestion.objects.prefetch_related('question', 'quiz') \
             .select_related('question', 'quiz') \
             .annotate(
                 answer_uuid=Subquery(answer[:1].values('uuid')),
                 answer_choice_uuid=Subquery(answer[:1].values('choice__uuid'))
             )
 
-        return qs
+        return query
 
     def get_object(self, uuid=None):
         try:
@@ -56,7 +59,9 @@ class QuizQuestionApiView(viewsets.ViewSet):
     def list(self, request, format=None):
         context = {'request': request}
         quiz_uuid = request.query_params.get('quiz_uuid', None)
+        
         self.simulation_uuid = request.query_params.get('simulation_uuid', None)
+        self.position = request.query_params.get('position', None)
 
         try:
             queryset = self.queryset().filter(quiz__uuid=quiz_uuid)
