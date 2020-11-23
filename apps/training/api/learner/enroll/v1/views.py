@@ -42,7 +42,7 @@ class EnrollApiView(viewsets.ViewSet):
         qs = Enroll.objects \
             .prefetch_related('learner', 'course', 'enroll_session') \
             .select_related('learner', 'course') \
-            .filter(learner_id=self.user.id)
+            .filter(learner__id=self.user.id)
 
         return qs
 
@@ -113,7 +113,7 @@ class SimulationApiView(viewsets.ViewSet):
         qs = Simulation.objects \
             .prefetch_related('learner', 'enroll', 'enroll_session', 'course', 'course_session') \
             .select_related('learner', 'enroll', 'enroll_session', 'course', 'course_session') \
-            .filter(learner_id=self.user.id)
+            .filter(learner__id=self.user.id)
 
         return qs
 
@@ -258,7 +258,7 @@ class SimulationQuizApiView(viewsets.ViewSet):
         qs = SimulationQuiz.objects \
             .prefetch_related('simulation', 'course_quiz', 'course', 'quiz', 'answer') \
             .select_related('simulation', 'course_quiz', 'course', 'quiz') \
-            .filter(simulation__learner_id=self.user.id)
+            .filter(simulation__learner__id=self.user.id)
 
         return qs
 

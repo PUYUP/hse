@@ -52,8 +52,7 @@ class CourseApiView(viewsets.ViewSet):
             q_course_session = Q(start_date__gte=today)
         
         course_session_objs = CourseSession.objects.filter(q_course_session).order_by('start_date')
-        enroll_obj = Enroll.objects.filter(course__uuid=OuterRef('uuid'),
-                                           learner_id=self.request.user.id)
+        enroll_obj = Enroll.objects.filter(course__uuid=OuterRef('uuid'), learner__id=self.request.user.id)
 
         qs = Course.objects \
             .prefetch_related('creator', 'category', 'chapter', Prefetch('course_session', queryset=course_session_objs)) \
