@@ -1,7 +1,7 @@
 from django.core.exceptions import ValidationError
 from rest_framework import viewsets, status as response_status
 from rest_framework.exceptions import NotAcceptable
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.parsers import JSONParser, MultiPartParser
 
@@ -10,7 +10,7 @@ from .serializers import ChapterSerializer
 
 class ChapterApiView(viewsets.ViewSet):
     lookup_field = 'uuid'
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, IsAdminUser,)
     parser_classes = (JSONParser, MultiPartParser,)
 
     def list(self, request, format=None):

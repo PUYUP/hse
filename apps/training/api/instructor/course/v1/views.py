@@ -1,7 +1,7 @@
 from django.core.exceptions import ValidationError
 from rest_framework import viewsets, status as response_status
 from rest_framework.exceptions import NotAcceptable
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 
 from .serializers import CourseSerializer
@@ -9,7 +9,7 @@ from .serializers import CourseSerializer
 
 class CourseApiView(viewsets.ViewSet):
     lookup_field = 'uuid'
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated, IsAdminUser,)
 
     def list(self, request, format=None):
         return Response({}, status=response_status.HTTP_200_OK)

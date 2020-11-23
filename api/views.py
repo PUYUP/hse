@@ -46,6 +46,8 @@ class RootApiView(APIView):
                                        format=format, current_app='training_api:instructor'),
                     'chapters': reverse('training_api:instructor:chapter-list', request=request,
                                         format=format, current_app='training_api:instructor'),
+                    'questions': reverse('training_api:instructor:question-list', request=request,
+                                         format=format, current_app='training_api:instructor'),
                 }
             }
         })
