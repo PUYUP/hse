@@ -1,7 +1,7 @@
 {% extends 'console/base.html' %}
 
 {% block content %}
-    <h3>{{ obj.label }}</h3>
+    <h3>{{ queryset.label }}</h3>
     
     <div class="questions">
         {% for item in quiz_question %}
@@ -308,7 +308,7 @@
                             });
 
                             if (quizQuestion.length > 0) {
-                                saveQuizQuestion(quizQuestion);
+                                //saveQuizQuestion(quizQuestion);
                             }
                         {% endif %}
                     }
