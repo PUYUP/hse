@@ -82,5 +82,4 @@ class ListSerializerUpdateMappingField(serializers.ListSerializer):
         for obj_uuid, obj in obj_mapping.items():
             if obj_uuid not in data_mapping:
                 obj.delete()
-
         return ret

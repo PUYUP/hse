@@ -2,10 +2,413 @@
 
 {% block content %}
     <h3>{{ obj.label }}</h3>
+    
+    <div class="questions">
+        {% for item in quiz_question %}
+            <div class="question-item mb-4 card" data-uuid="{{ item.question.uuid }}">
+                <div class="card-body">
+                    <div class="block">
+                        <div class="form-group w-100">
+                            <label for="question-{{ forloop.counter }}" class="question-label">Question #<span class="number">{{ forloop.counter }}</span> *</label>
+                            <input type="text" class="form-control question" name="question[]" value="{{ item.question.label }}" required>
+                        </div> 
 
-    <div class="block">
-        <a href="" class="btn btn-primary btn-sm pl-4 pr-4">Add {% if position == 'survey' %}Survey{% else %}Evaluate{% endif %} Question</a>
+                        <div class="form-group w-100">
+                            <label for="description-{{ forloop.counter }}" class="question-description">Description</label>
+                            <textarea class="form-control description" name="description[]">{{ item.question.description }}</textarea>
+                        </div> 
+
+                        <p class="font-weight-bold">Choices *</p>
+                        
+                        <div class="choice">
+                            {% for c in item.question.choice.all %}
+                                <div class="choice-{{ forloop.counter }}" data-uuid="{{ c.uuid }}">
+                                    <div class="d-flex w-full">
+                                        <div class="form-group" style="width: 50px;">
+                                            <input type="text" class="form-control text-center identifier" name="choice-identifier[{{ forloop.counter }}]" value="{{ c.identifier }}" disabled>
+                                        </div>
+
+                                        <div class="form-group ml-3" style="width: 50px;">
+                                            <input type="radio" id="is-true-{{ forloop.parentloop.counter }}" class="form-control text-center is-true" name="choice-is-true[{{ forloop.parentloop.counter }}]" {% if c.is_true %}checked{% endif %}>
+                                        </div>
+
+                                        <div class="form-group pl-3 w-100">
+                                            <input type="text" class="form-control answer" name="choice-label[{{ forloop.counter }}]" value="{{ c.label }}" placeholder="Answer...">
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <button type="button" class="remove-question btn btn-sm btn-danger pl-3 pr-3">Delete</button>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
     </div>
 
-    
+    <div class="block">
+        <button type="button" id="save-question" class="btn btn-info btn-sm pl-4 pr-4 mr-3">
+            Save
+        </button>
+
+        <button type="button" class="btn btn-primary btn-sm pl-4 pr-4 add-question-button">
+            Add {% if position == 'survey' %}Survey{% else %}Evaluate{% endif %} Question
+        </button>
+    </div>
+{% endblock %}
+
+{% block js %}
+    <script type="text/javascript">
+        window.addEventListener('DOMContentLoaded', function() {
+            function flatten(arr) {
+                var flat = [];
+                for (var i = 0; i < arr.length; i++) {
+                    flat = flat.concat(arr[i]);
+                }
+                return flat;
+            }
+
+            var max_fields      = 100;
+            var wrapper   		= $(".questions"); 
+            var add_button      = $(".add-question-button");
+            var choices         = ['A', 'B', 'C', 'D'];
+
+            var choiceItem = function(x, identifier) {
+                return `<div class="choice-${x}">
+                    <div class="d-flex w-full">
+                        <div class="form-group" style="width: 50px;">
+                            <input type="text" class="form-control text-center identifier" name="choice-identifier[${x}]" value="${identifier}" disabled>
+                        </div>
+
+                        <div class="form-group ml-3" style="width: 50px;">
+                            <input type="radio" id="is-true-${x}" class="form-control text-center is-true" name="choice-is-true[${x}]">
+                        </div>
+
+                        <div class="form-group pl-3 w-100">
+                            <input type="text" class="form-control answer" name="choice-label[${x}]" placeholder="Answer...">
+                        </div>
+                    </div>
+                </div>`;
+            }
+        
+            var x = {% if quiz_question %}'{{ quiz_question.count }}'{% else %}0{% endif %};
+            var questionCount = (x > 0 ? x : 1);
+
+            $(add_button).click(function(e) {
+                e.preventDefault();
+
+                if(x < max_fields){
+                    x++;
+
+                    var item = `<div class="question-item mb-4 card">
+                        <div class="card-body">
+                            <div class="block">
+                                <div class="form-group w-100">
+                                    <label for="question-${x}" class="question-label">Question #<span class="number">${x}</span> *</label>
+                                    <input type="text" class="form-control question" name="question[]" required>
+                                </div> 
+
+                                <div class="form-group w-100">
+                                    <label for="description-${x}" class="question-description">Description</label>
+                                    <textarea class="form-control description" name="description[]"></textarea>
+                                </div> 
+
+                                <p class="font-weight-bold">Choices</p>
+                                
+                                <div class="choice">`;
+                                    $.each(choices, function(i, v) {
+                                        item += choiceItem(x, v);
+                                    });
+                                item += `</div>
+
+                                <button type="button" class="remove-question btn btn-sm btn-danger pl-3 pr-3">Delete</button>
+                            </div>
+                        </div>
+                    </div>`;
+
+                    $(wrapper).append(item);
+                }
+            });
+            
+            $(wrapper).on('click', '.remove-question', function(e) {
+                e.preventDefault(); 
+
+                $(this).closest('.question-item').remove(); 
+                x--;
+
+                var items = $('.questions > div');
+                
+                $.each(items, function(i, v) {
+                    var index = i + 1;
+
+                    $(v).find('label.question-label').attr('for', 'question-' + index);
+                    $(v).find('label.question-description').attr('for', 'description-' + index);
+                    $(v).find('span.number').html(index);
+                });
+            });
+
+            $(document).on('click', '#save-question', function(e) {
+                e.preventDefault();
+                
+                var questions = [];
+                var items = $('.questions > div');
+
+                var choiceValid = true;
+                var choiceAnswerValid = true;
+                var questionValid = true;
+                var questionChoice = [];
+                var a = [];
+
+                $.each(items, function(i, v) {
+                    var question = $(v).find('input.question').val();
+                    var description = $(v).find('textarea.description').val();
+                    var questionUUID = $(v).attr('data-uuid');
+                    var choiceEl = $(v).find('.choice > div');
+                    var choices = [];
+                    var b = [];
+
+                    if (!question) {
+                        alert('Question not filled');
+                        questionValid = false;
+                    }
+                    
+                    $.each(choiceEl, function(ci, cv) {
+                        var is_true = $(cv).find('input.is-true:checked').val();
+                        var cUUID = $(cv).attr('data-uuid');
+                        var label = $(cv).find('input.answer').val();
+                        var identifier = $(cv).find('input.identifier').val();
+
+                        var c = {
+                            'identifier': identifier,
+                            'label': label,
+                            'is_true': is_true ? true : false,
+                        }
+
+                        if (cUUID) c['uuid'] = cUUID;
+                        
+                        if (label) {
+                            b.push(c);
+                            choices.push(c);
+                        }
+                    });
+
+                    a[i] = b;
+
+                    // Validate all choice filled
+                    if (choices.length < 4) {
+                        alert('All choice must provided');
+                        choiceValid = false;
+                    }
+
+                    // Validate choice
+                    var has_true_answer = choices.find(d => d.is_true == true);
+                    if (!has_true_answer) {
+                        alert('Choice must have one true answer');
+                        choiceValid = false;
+                    }
+
+                    var q = {
+                        'label': question,
+                        'description': description,
+                    }
+
+                    if (questionUUID || questionUUID != undefined ) q['uuid'] = questionUUID;
+
+                    questions.push(q);
+                });
+
+                // All valid.
+                if (questionValid && choiceValid) {
+                    saveQuestion(questions, a);
+                }
+            });
+
+
+            /**
+             * Save questions
+             */
+            var saveQuestion = function(context, a) {
+                var oldQuestionUUID = [];
+                
+                $.each(context, function(i, v) {
+                    var x = v.uuid;
+                    oldQuestionUUID.push(x);
+                });
+
+                $.ajax({
+                    method: 'PUT',
+                    url: API_ENDPOINT + 'training/instructor/questions/',
+                    headers: {'X-CSRFToken': Cookies.get('csrftoken')},
+                    xhrFields: {withCredentials: true},
+                    contentType: 'application/json; charset=utf-8',
+                    dataType: 'json',
+                    data: JSON.stringify(context),
+                    cache: false,
+                    success: function(response) {
+                        var allChoice = [];
+                        var questionUUID = [];
+
+                        $.each(response, function(qi, qv) {
+                            questionUUID.push(qv.uuid);
+
+                            var k = a[qi];
+                            var c = [];
+                            
+                            $.each(k, function(ki, kv) {
+                                kv['question'] = qv.uuid;
+                                c[ki] = kv;
+                            });
+
+                            allChoice[qi] = c;
+                        });
+
+                        // Combine old and new questions
+                        var combinedUUID = questionUUID.concat(oldQuestionUUID);
+
+                        // Store to localstorage
+                        localStorage.setItem('question_uuids', JSON.stringify(questionUUID));
+                        
+                        var combineChoice = flatten(allChoice);
+                        saveChoice(combineChoice);
+                    }
+                });
+            }
+
+
+            /**
+             * Save choices
+             */
+            var saveChoice = function(context) {
+                $.ajax({
+                    method: 'PUT',
+                    url: API_ENDPOINT + 'training/instructor/choices/',
+                    headers: {'X-CSRFToken': Cookies.get('csrftoken')},
+                    xhrFields: {withCredentials: true},
+                    contentType: 'application/json; charset=utf-8',
+                    dataType: 'json',
+                    data: JSON.stringify(context),
+                    cache: false,
+                    success: function(response) {
+                        {% if not quiz %}
+                            saveQuiz();
+                        {% else %}
+                            var x = localStorage.getItem('question_uuids');
+                            var y = x ? JSON.parse(x) : [];
+                            var quizQuestion = [];
+
+                            $.each(y, function(i, v) {
+                                var z = {
+                                    'quiz': '{{ quiz.uuid }}',
+                                    'question': v,
+                                    'sort': i + questionCount,
+                                }
+
+                                quizQuestion.push(z);
+                            });
+
+                            if (quizQuestion.length > 0) {
+                                saveQuizQuestion(quizQuestion);
+                            }
+                        {% endif %}
+                    }
+                });
+            }
+
+            
+            /***
+             * Save quiz
+             */
+            var saveQuiz = function() {
+                var context = {
+                    'label': '{{ queryset.label }} {{ position }}',
+                }
+
+                $.ajax({
+                    method: 'POST',
+                    url: API_ENDPOINT + 'training/instructor/quizs/',
+                    headers: {'X-CSRFToken': Cookies.get('csrftoken')},
+                    xhrFields: {withCredentials: true},
+                    contentType: 'application/json; charset=utf-8',
+                    dataType: 'json',
+                    data: JSON.stringify(context),
+                    cache: false,
+                    success: function(response) {
+                        var x = localStorage.getItem('question_uuids');
+                        var y = x ? JSON.parse(x) : [];
+                        var quizQuestion = [];
+
+                        $.each(y, function(i, v) {
+                            var z = {
+                                'quiz': response?.uuid,
+                                'question': v,
+                                'sort': i + questionCount,
+                            }
+
+                            quizQuestion.push(z);
+                        });
+
+                        localStorage.setItem('quiz_uuid', response.uuid);
+
+                        if (quizQuestion.length > 0) {
+                            saveQuizQuestion(quizQuestion);
+                        }
+                    }
+                });
+            }
+
+
+            /***
+             * Save quiz question
+             * Assign question to quiz
+             */
+            var saveQuizQuestion = function(context) {
+                $.ajax({
+                    method: 'PUT',
+                    url: API_ENDPOINT + 'training/instructor/quizquestions/',
+                    headers: {'X-CSRFToken': Cookies.get('csrftoken')},
+                    xhrFields: {withCredentials: true},
+                    contentType: 'application/json; charset=utf-8',
+                    dataType: 'json',
+                    data: JSON.stringify(context),
+                    cache: false,
+                    success: function(response) {
+                        {% if not course_quiz %}
+                            localStorage.removeItem('question_uuids');
+
+                            var quiz_uuid = localStorage.getItem('quiz_uuid');
+                            var x = {
+                                'quiz': quiz_uuid,
+                                'course': '{{ queryset.uuid }}',
+                                'position': '{{ position }}'
+                            }
+
+                            saveCourseQuiz(x);
+                        {% endif %}
+                    }
+                });
+            }
+
+
+            /***
+             * Save course quiz
+             * Assign quiz to course
+             */
+            var saveCourseQuiz = function(context) {
+                $.ajax({
+                    method: 'POST',
+                    url: API_ENDPOINT + 'training/instructor/coursequizs/',
+                    headers: {'X-CSRFToken': Cookies.get('csrftoken')},
+                    xhrFields: {withCredentials: true},
+                    contentType: 'application/json; charset=utf-8',
+                    dataType: 'json',
+                    data: JSON.stringify(context),
+                    cache: false,
+                    success: function(response) {
+                        localStorage.removeItem('quiz_uuid');
+                    }
+                });
+            }
+        });
+    </script>
 {% endblock %}

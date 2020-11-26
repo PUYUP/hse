@@ -1,0 +1,13 @@
+{% load listing %}
+{% load i18n %}
+<nav aria-label="Page navigation example" class="mb-4">
+    {% if pagination_required %}
+        <ul class="pagination justify-content-end align-items-center">
+            <li class="pr-3">Total {{ cl.full_result_count }}</li>
+
+            {% for i in page_range %}
+                {% paginator_number cl i %}
+            {% endfor %}
+        </ul>
+    {% endif %}
+</nav>

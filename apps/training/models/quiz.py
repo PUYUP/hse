@@ -91,6 +91,8 @@ class AbstractQuizQuestion(models.Model):
     question = models.ForeignKey('training.Question', on_delete=models.CASCADE,
                                  related_name='quiz_question')
 
+    sort = models.IntegerField(default=1)
+
     class Meta:
         abstract = True
         app_label = 'training'

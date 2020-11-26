@@ -1,14 +1,20 @@
+from apps.training.api.instructor.quiz.v1.serializers import CourseQuiz
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import query
 from django.views import View
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.db import transaction
+from django.conf import settings
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 from utils.generals import get_model
+from utils.pagination import Pagination
 from .forms import CourseForm
 
 Course = get_model('training', 'Course')
+CourseQuiz = get_model('training', 'CourseQuiz')
 
 
 @method_decorator(login_required, name='dispatch')
@@ -17,16 +23,30 @@ class CourseView(View):
     context = {}
 
     def get_objects(self):
-        objs = Course.objects.prefetch_related('category') \
+        queryset = Course.objects.prefetch_related('category') \
             .select_related('category') \
             .all()
 
-        return objs
+        return queryset
 
     def get(self, request):
-        objs = self.get_objects()
+        queryset = self.get_objects()
 
-        self.context['objs'] = objs
+        page_num = int(self.request.GET.get('p', 0))
+        paginator = Paginator(queryset, settings.PAGINATION_PER_PAGE)
+
+        try:
+            queryset_pagination = paginator.page(page_num + 1)
+        except PageNotAnInteger:
+            queryset_pagination = paginator.page(1)
+        except EmptyPage:
+            queryset_pagination = paginator.page(paginator.num_pages)
+
+        pagination = Pagination(request, queryset, queryset_pagination, page_num, paginator)
+
+        self.context['queryset'] = queryset
+        self.context['queryset_pagination'] = queryset_pagination
+        self.context['pagination'] = pagination
         return render(self.request, self.template_name, self.context)
 
 
@@ -37,12 +57,12 @@ class CourseDetailView(View):
 
     def get(self, request, uuid=None):
         try:
-            obj = Course.objects.get(uuid=uuid)
+            queryset = Course.objects.get(uuid=uuid)
         except ObjectDoesNotExist:
-            obj = None
+            queryset = None
         
-        self.context['obj'] = obj
-        self.context['chapter'] = obj.chapter.all()
+        self.context['queryset'] = queryset
+        self.context['chapter'] = queryset.chapter.all()
         return render(self.request, self.template_name, self.context)
 
 
@@ -55,25 +75,25 @@ class CourseEditorView(View):
     def get_object(self, uuid=None, is_update=False):
         try:
             if is_update:
-                obj = Course.objects.select_for_update().get(uuid=uuid)
+                query = Course.objects.select_for_update().get(uuid=uuid)
             else:
-                obj = Course.objects.get(uuid=uuid)
+                query = Course.objects.get(uuid=uuid)
         except ObjectDoesNotExist:
-            obj = None
+            query = None
         
-        return obj
+        return query
 
     def get(self, request, uuid=None):
-        obj = self.get_object(uuid=uuid)
+        queryset = self.get_object(uuid=uuid)
 
-        self.context['form'] = self.form(instance=obj)
-        self.context['obj'] = obj
+        self.context['form'] = self.form(instance=queryset)
+        self.context['queryset'] = queryset
         return render(self.request, self.template_name, self.context)
 
     @transaction.atomic()
     def post(self, request, uuid=None):
-        obj = self.get_object(uuid=uuid, is_update=True)
-        form = self.form(request.POST, request.FILES, instance=obj)
+        queryset = self.get_object(uuid=uuid, is_update=True)
+        form = self.form(request.POST, request.FILES, instance=queryset)
 
         if form.is_valid():
             f = form.save()
@@ -91,16 +111,31 @@ class CourseQuizView(View):
 
     def get_object(self, uuid=None, is_update=False):
         try:
-            obj = Course.objects.get(uuid=uuid)
+            query = Course.objects.get(uuid=uuid)
         except ObjectDoesNotExist:
-            obj = None
+            query = None
         
-        return obj
+        return query
 
     def get(self, request, uuid=None):
         self.position = request.GET.get('position')
-        obj = self.get_object(uuid=uuid)
+        queryset = self.get_object(uuid=uuid)
+        quiz_question = None
+        quiz = None
+
+        try:
+            course_quiz = CourseQuiz.objects.get(course__uuid=uuid, position=self.position)
+        except ObjectDoesNotExist:
+            course_quiz = None
         
+        if course_quiz:
+            quiz = getattr(course_quiz, 'quiz', None)
+            if quiz:
+                quiz_question = quiz.quiz_question.all()
+
         self.context['position'] = self.position
-        self.context['obj'] = obj
+        self.context['queryset'] = queryset
+        self.context['course_quiz'] = course_quiz
+        self.context['quiz_question'] = quiz_question
+        self.context['quiz'] = quiz
         return render(self.request, self.template_name, self.context)

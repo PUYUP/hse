@@ -44,10 +44,18 @@ class RootApiView(APIView):
                 'instructor': {
                     'courses': reverse('training_api:instructor:course-list', request=request,
                                        format=format, current_app='training_api:instructor'),
+                    'coursequizs': reverse('training_api:instructor:coursequiz-list', request=request,
+                                           format=format, current_app='training_api:instructor'),
                     'chapters': reverse('training_api:instructor:chapter-list', request=request,
                                         format=format, current_app='training_api:instructor'),
                     'questions': reverse('training_api:instructor:question-list', request=request,
                                          format=format, current_app='training_api:instructor'),
+                    'choices': reverse('training_api:instructor:choice-list', request=request,
+                                       format=format, current_app='training_api:instructor'),
+                    'quizs': reverse('training_api:instructor:quiz-list', request=request,
+                                     format=format, current_app='training_api:instructor'),
+                    'quizquestions': reverse('training_api:instructor:quizquestion-list', request=request,
+                                             format=format, current_app='training_api:instructor'),
                 }
             }
         })
