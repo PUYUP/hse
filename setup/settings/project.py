@@ -8,9 +8,8 @@ from .base import *
 
 # GLOBAL CONFIGURATIONS
 APP_NAME = 'HSE Training'
-PROJECT_URL = 'www.hse.com'
-SHORT_URL = 'www.short.url' # without backslash ('/')
-PAGINATION_PER_PAGE = 2
+PROJECT_URL = 'console.ptk-hsse.com'
+PAGINATION_PER_PAGE = 10
 LOGIN_WITH_JWT = True
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
 

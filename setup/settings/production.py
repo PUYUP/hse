@@ -10,7 +10,8 @@ ALLOWED_HOSTS = [
     '127.0.0.1', 
     '[::1]',
     '139.59.247.46',
-    'ptk-hsse.com'
+    'ptk-hsse.com',
+    'console.ptk-hsse.com'
 ]
 
 
