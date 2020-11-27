@@ -1,0 +1,42 @@
+{% extends 'console/base.html' %}
+
+{% block content %}
+    <table class="table">
+        <tbody>
+            <tr>    
+                <td>No.</td>
+                <td>{{ queryset.id }}</td>
+            </tr>
+
+            <tr>   
+                <td>Name</td>
+                <td>{{ queryset.first_name }}</td>
+            </tr>
+            
+            <tr>   
+                <td>Alamat Email</td>
+                <td>{{ queryset.email }}</td>
+            </tr>
+
+            <tr>   
+                <td>Tanggal Lahir</td>
+                <td>{{ queryset.profile.birthdate }}</td>
+            </tr>
+
+            <tr>   
+                <td>No. Telp</td>
+                <td>{{ queryset.account.msisdn }}</td>
+            </tr>
+
+            <tr>   
+                <td>Nama Perusahaan</td>
+                <td>{{ queryset.profile.company }}</td>
+            </tr>
+
+            <tr>   
+                <td>Jabatan Pekerjaan</td>
+                <td>{{ queryset.profile.position }}</td>
+            </tr>
+        </tbody>
+    </table>
+{% endblock %}

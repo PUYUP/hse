@@ -1,3 +1,4 @@
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db import utils
 from django.views import View
@@ -35,3 +36,17 @@ class LearnerView(View):
         self.context['queryset_pagination'] = queryset_pagination
         self.context['pagination'] = pagination
         return render(self.request, self.template_name, self.context)
+
+
+class LearnerDetailView(View):
+    template_name = 'console/learner-detail.html'
+    context = {}
+
+    def get(self, request, uuid=None):
+        try:
+            queryset = User.objects.get(uuid=uuid)
+        except ObjectDoesNotExist:
+            queryset = None
+        
+        self.context['queryset'] = queryset
+        return render(request, self.template_name, self.context)

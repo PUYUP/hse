@@ -30,7 +30,7 @@
                     <td>{{ item.profile.position }}</td>
                     <td></td>
                     <td></td>
-                    <td><a href="" class="btn btn-sm btn-warning">Detail</a></td>
+                    <td><a href="{% url 'learner_detail' item.uuid %}" class="btn btn-sm btn-warning">Detail</a></td>
                 </tr>
             {% endfor %}
         </tbody>
