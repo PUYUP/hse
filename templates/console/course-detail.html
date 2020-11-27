@@ -182,7 +182,7 @@
                 $.ajax({
                     method: 'DELETE',
                     url: API_ENDPOINT + 'training/instructor/chapters/' + uuid + '/',
-                    headers: {'X-CSRFToken': Cookies.get('csrftoken')},
+                    headers: {'X-CSRFTOKEN': Cookies.get('csrftoken')},
                     xhrFields: {withCredentials: true},
                     contentType: 'application/json; charset=utf-8',
                     dataType: 'json',

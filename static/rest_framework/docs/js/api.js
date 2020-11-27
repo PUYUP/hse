@@ -215,7 +215,7 @@ $(function () {
       // Session authentication
       options.auth = new coreapi.auth.SessionAuthentication({
         csrfCookieName: 'csrftoken',
-        csrfHeaderName: 'X-CSRFToken'
+        csrfHeaderName: 'X-CSRFTOKEN'
       })
     }
 
