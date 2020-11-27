@@ -83,6 +83,19 @@
             return cookieValue;
         }
 
+        function csrfSafeMethod(method) {
+            // these HTTP methods do not require CSRF protection
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
+
+        $.ajaxSetup({ 
+            beforeSend: function(xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+                }
+            }
+        });
+
         var API_ENDPOINT = '{% if request.is_secure %}https://{% else %}http://{% endif %}{{ request.META.HTTP_HOST }}/api/{{ api_version }}/';
         var COOKIE_AGE = new Date(new Date().getTime() + 15 * 60 * 1000); // 15 minutes
     </script>
