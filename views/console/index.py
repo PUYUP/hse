@@ -2,8 +2,8 @@ from django.views import View
 from django.shortcuts import render
 
 
-class HomeView(View):
-    template_name = 'console/home.html'
+class ConsoleView(View):
+    template_name = 'console/index.html'
     context = {}
 
     def get(self, request):
