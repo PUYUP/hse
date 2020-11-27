@@ -9,8 +9,6 @@ ALLOWED_HOSTS = [
     'localhost', 
     '127.0.0.1', 
     '[::1]',
-    '139.59.247.46',
-    'ptk-hsse.com',
     'console.ptk-hsse.com'
 ]
 
@@ -48,20 +46,20 @@ SECURE_HSTS_SECONDS = 5
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 X_FRAME_OPTIONS = 'DENY'
+"""
 
 
 # Django csrf
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/2.2/ref/csrf/
-CSRF_COOKIE_DOMAIN = '.hse-backend.herokuapp.com.com'
+CSRF_COOKIE_DOMAIN = '.ptk-hsse.com'
 CSRF_HEADER_NAME = 'HTTP_X_CSRFTOKEN'
 CSRF_COOKIE_SECURE = True
 CSRF_USE_SESSIONS = False
 CSRF_COOKIE_HTTPONLY = False
 CSRF_TRUSTED_ORIGINS = [
-    '.hse-backend.herokuapp.com.com'
+    '.ptk-hsse.com'
 ]
-"""
 
 
 # Django CORS
