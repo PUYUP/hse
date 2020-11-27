@@ -52,7 +52,7 @@ X_FRAME_OPTIONS = 'DENY'
 # Django csrf
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/2.2/ref/csrf/
-# CSRF_COOKIE_DOMAIN = '.ptk-hsse.com'
+CSRF_COOKIE_DOMAIN = '.ptk-hsse.com'
 CSRF_COOKIE_SECURE = True
 CSRF_TRUSTED_ORIGINS = [
     'ptk-hsse.com',
