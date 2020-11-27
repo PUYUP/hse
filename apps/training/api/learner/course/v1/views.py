@@ -47,9 +47,16 @@ class CourseApiView(viewsets.ViewSet):
             q_start_date = Q(course_session__start_date__range=(dt_format, date_end_format))
             q_course_session = Q(start_date__range=(dt_format, date_end_format))
         else:
-            today = timezone.datetime.today().strftime('%Y-%m-%d')
-            q_start_date = Q(course_session__start_date__gte=today)
-            q_course_session = Q(start_date__gte=today)
+            today = timezone.datetime.today()
+            today_fmt = today.strftime('%Y-%m-%d')
+            year = today.strftime('%Y')
+            month = today.strftime('%m')
+            day_start, day_end = monthrange(int(year), int(month))
+            date_end = parser.parse('{}-{}-{}'.format(year, month, day_end))
+            date_end_format = date_end.strftime('%Y-%m-%d')
+    
+            q_start_date = Q(course_session__start_date__range=(today_fmt, date_end_format))
+            q_course_session = Q(start_date__range=(today_fmt, date_end_format))
         
         course_session_objs = CourseSession.objects.filter(q_course_session).order_by('start_date')
         enroll_obj = Enroll.objects.filter(course__uuid=OuterRef('uuid'), learner__id=self.request.user.id)

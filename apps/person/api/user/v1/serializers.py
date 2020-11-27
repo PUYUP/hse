@@ -253,7 +253,6 @@ class UserSerializer(DynamicFieldsModelSerializer, serializers.ModelSerializer):
             if not self.password1 or not self.password2:
                 raise serializers.ValidationError(_(u"Kata sandi lama dan baru wajib"))
             
-            print(self.password2)
             if self.password1 != self.password2:
                 raise serializers.ValidationError(_(u"Kata sandi lama dan baru tidak sama"))
 
