@@ -456,6 +456,7 @@
                     xhrFields: {withCredentials: true},
                     contentType: 'application/json; charset=utf-8',
                     dataType: 'json',
+                    crossDomain: true,
                     data: JSON.stringify(context),
                     cache: false,
                     success: function(response) {
