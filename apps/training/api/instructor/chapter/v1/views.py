@@ -1,6 +1,6 @@
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import transaction
-from django.db.models import query
+from django.utils.translation import gettext_lazy as _
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 
@@ -58,3 +58,16 @@ class ChapterApiView(viewsets.ViewSet):
 
             return Response(serializer.data, status=response_status.HTTP_200_OK)
         return Response(serializer.errors, status=response_status.HTTP_406_NOT_ACCEPTABLE)
+
+    @method_decorator(never_cache)
+    @transaction.atomic
+    def destroy(self, request, uuid=None, format=None):
+        try:
+            queryset = Chapter.objects.get(uuid=uuid)
+        except ObjectDoesNotExist:
+            raise NotFound()
+
+        # execute delete
+        queryset.delete()
+        return Response({'detail': _("Delete success!")},
+                        status=response_status.HTTP_204_NO_CONTENT)

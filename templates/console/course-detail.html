@@ -83,7 +83,11 @@
             {% for item in chapter %}
                 <li class="d-flex w-100 border-top pt-2 mt-2">
                     <div>{{ item.label }}</div>
-                    <a href="{% url 'chapter_editor' item.uuid %}" class="btn btn-warning btn-sm ml-auto">Edit</a>
+
+                    <div class="ml-auto">
+                        <button type="button" id="delete-chapter" data-chapter-uuid="{{ item.uuid }}" class="btn btn-danger btn-sm mr-4">Delete</button>
+                        <a href="{% url 'chapter_editor' item.uuid %}" class="btn btn-warning btn-sm">Edit</a>
+                    </div>
                 </li>
             {% endfor %}
         </ul>
@@ -109,7 +113,6 @@
                 // ...
                 $(document).on('shown.bs.modal', '#chapter-modal', function (e) {
                     var course_uuid = $(e.relatedTarget).attr('data-course-uuid');
-                    console.log(course_uuid);
                 });
 
 
@@ -119,7 +122,7 @@
                 $('#fileupload').fileupload({
                     method: 'POST',
                     url: API_ENDPOINT + 'training/instructor/chapters/',
-                    headers: {'X-CSRFToken': Cookies.get('csrftoken')},
+                    headers: {'X-CSRF-TOKEN': Cookies.get('csrftoken')},
                     dataType: 'json',
                     sequentialUploads: true,
                     add: function (e, data) {    
@@ -163,6 +166,29 @@
                     data.formData = {
                         'course': '{{ queryset.uuid }}',
                         'label': $('#label').val(),
+                    }
+                });
+            });
+
+
+            /***
+             * DELETE CHAPTER
+             */
+            $(document).on('click', '#delete-chapter', function(e) {
+                e.preventDefault();
+
+                var uuid = $(this).attr('data-chapter-uuid');
+
+                $.ajax({
+                    method: 'DELETE',
+                    url: API_ENDPOINT + 'training/instructor/chapters/' + uuid + '/',
+                    headers: {'X-CSRFToken': Cookies.get('csrftoken')},
+                    xhrFields: {withCredentials: true},
+                    contentType: 'application/json; charset=utf-8',
+                    dataType: 'json',
+                    cache: false,
+                    success: function(response) {
+                        window.location.reload();
                     }
                 });
             });

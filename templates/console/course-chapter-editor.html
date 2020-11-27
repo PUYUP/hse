@@ -66,7 +66,7 @@
                 $('#fileupload').fileupload({
                     method: 'PATCH',
                     url: API_ENDPOINT + 'training/instructor/chapters/{{ queryset.uuid }}/',
-                    headers: {'X-CSRFToken': Cookies.get('csrftoken')},
+                    headers: {'X-CSRF-TOKEN': Cookies.get('csrftoken')},
                     dataType: 'json',
                     sequentialUploads: true,
                     add: function (e, data) {    
@@ -130,7 +130,7 @@
                         $.ajax({
                             method: 'PATCH',
                             url: API_ENDPOINT + 'training/instructor/chapters/{{ queryset.uuid }}/',
-                            headers: {'X-CSRFToken': Cookies.get('csrftoken')},
+                            headers: {'X-CSRF-TOKEN': Cookies.get('csrftoken')},
                             xhrFields: {withCredentials: true},
                             contentType: 'application/json; charset=utf-8',
                             dataType: 'json',
