@@ -56,7 +56,7 @@ CSRF_COOKIE_SECURE = True
 CSRF_USE_SESSIONS = False
 CSRF_COOKIE_HTTPONLY = False
 CSRF_TRUSTED_ORIGINS = [
-    '.ptk-hsse.com',
+    'ptk-hsse.com',
 ]
 
 
