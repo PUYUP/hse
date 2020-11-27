@@ -4,6 +4,11 @@
     <span class="badge badge-warning">{{ position }}</span> <br />
     <h3>{{ queryset.label }}</h3>
     
+    <div class="form-group">
+        <label for="duration">Duration in minutes *</label>
+        <input type="number" class="form-control" name="duration" id="duration" value="{% if course_quiz %}{{ course_quiz.duration }}{% endif %}" required>
+    </div>
+
     <div class="questions">
         {% for item in quiz_question %}
             <div class="question-item mb-4 card" data-question-uuid="{{ item.question.uuid }}" data-quiz-question-uuid="{{ item.uuid }}">
@@ -425,12 +430,14 @@
                             var x = {
                                 'quiz': quiz_uuid,
                                 'course': '{{ queryset.uuid }}',
-                                'position': '{{ position }}'
+                                'position': '{{ position }}',
+                                'duration': $('input#duration').val()
                             }
 
                             saveCourseQuiz(x);
                         {% else %}
-                            window.location.reload();
+                            var x = {'duration': $('input#duration').val()}
+                            updateCourseQuiz(x);
                         {% endif %}
                     }
                 });
@@ -445,6 +452,27 @@
                 $.ajax({
                     method: 'POST',
                     url: API_ENDPOINT + 'training/instructor/coursequizs/',
+                    headers: {'X-CSRFToken': Cookies.get('csrftoken')},
+                    xhrFields: {withCredentials: true},
+                    contentType: 'application/json; charset=utf-8',
+                    dataType: 'json',
+                    data: JSON.stringify(context),
+                    cache: false,
+                    success: function(response) {
+                        localStorage.removeItem('quiz_uuid');
+                        window.location.reload();
+                    }
+                });
+            }
+
+
+            /***
+             * Update course quiz
+             */
+            var updateCourseQuiz = function(context) {
+                $.ajax({
+                    method: 'PATCH',
+                    url: API_ENDPOINT + 'training/instructor/coursequizs/{{ course_quiz.uuid }}/',
                     headers: {'X-CSRFToken': Cookies.get('csrftoken')},
                     xhrFields: {withCredentials: true},
                     contentType: 'application/json; charset=utf-8',
