@@ -3,7 +3,6 @@ from django.views import View
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import ensure_csrf_cookie
 from django.db import transaction
 from django.conf import settings
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -103,7 +102,7 @@ class CourseEditorView(View):
         return render(self.request, self.template_name, self.context)
 
 
-@method_decorator([ensure_csrf_cookie, login_required], name='dispatch')
+@method_decorator(login_required, name='dispatch')
 class CourseQuizView(View):
     template_name = 'console/course-quiz.html'
     context = {}
