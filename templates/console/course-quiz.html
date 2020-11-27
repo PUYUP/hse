@@ -255,7 +255,7 @@
                 $.ajax({
                     method: 'DELETE',
                     url: API_ENDPOINT + 'training/instructor/questions/delete/',
-                    headers: {'X-CSRFToken': Cookies.get('csrftoken')},
+                    headers: {'X-CSRFToken': getCookie('csrftoken')},
                     xhrFields: {withCredentials: true},
                     contentType: 'application/json; charset=utf-8',
                     dataType: 'json',
@@ -282,7 +282,7 @@
                 $.ajax({
                     method: 'PUT',
                     url: API_ENDPOINT + 'training/instructor/questions/?position={{ position }}&course_uuid={{ queryset.uuid }}',
-                    headers: {'X-CSRFToken': Cookies.get('csrftoken')},
+                    headers: {'X-CSRFToken': getCookie('csrftoken')},
                     xhrFields: {withCredentials: true},
                     contentType: 'application/json; charset=utf-8',
                     dataType: 'json',
@@ -326,7 +326,7 @@
                 $.ajax({
                     method: 'PUT',
                     url: API_ENDPOINT + 'training/instructor/choices/',
-                    headers: {'X-CSRFToken': Cookies.get('csrftoken')},
+                    headers: {'X-CSRFToken': getCookie('csrftoken')},
                     xhrFields: {withCredentials: true},
                     contentType: 'application/json; charset=utf-8',
                     dataType: 'json',
@@ -377,7 +377,7 @@
                 $.ajax({
                     method: 'POST',
                     url: API_ENDPOINT + 'training/instructor/quizs/',
-                    headers: {'X-CSRFToken': Cookies.get('csrftoken')},
+                    headers: {'X-CSRFToken': getCookie('csrftoken')},
                     xhrFields: {withCredentials: true},
                     contentType: 'application/json; charset=utf-8',
                     dataType: 'json',
@@ -416,7 +416,7 @@
                 $.ajax({
                     method: 'PUT',
                     url: API_ENDPOINT + 'training/instructor/quizquestions/',
-                    headers: {'X-CSRFToken': Cookies.get('csrftoken')},
+                    headers: {'X-CSRFToken': getCookie('csrftoken')},
                     xhrFields: {withCredentials: true},
                     contentType: 'application/json; charset=utf-8',
                     dataType: 'json',
@@ -452,7 +452,7 @@
                 $.ajax({
                     method: 'POST',
                     url: API_ENDPOINT + 'training/instructor/coursequizs/',
-                    headers: {'X-CSRFToken': Cookies.get('csrftoken')},
+                    headers: {'X-CSRFToken': getCookie('csrftoken')},
                     xhrFields: {withCredentials: true},
                     contentType: 'application/json; charset=utf-8',
                     dataType: 'json',
@@ -473,7 +473,7 @@
                 $.ajax({
                     method: 'PATCH',
                     url: API_ENDPOINT + 'training/instructor/coursequizs/{{ course_quiz.uuid }}/',
-                    headers: {'X-CSRFToken': Cookies.get('csrftoken')},
+                    headers: {'X-CSRFToken': getCookie('csrftoken')},
                     xhrFields: {withCredentials: true},
                     contentType: 'application/json; charset=utf-8',
                     dataType: 'json',

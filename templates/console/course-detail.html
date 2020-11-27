@@ -122,7 +122,7 @@
                 $('#fileupload').fileupload({
                     method: 'POST',
                     url: API_ENDPOINT + 'training/instructor/chapters/',
-                    headers: {'X-CSRF-TOKEN': Cookies.get('csrftoken')},
+                    headers: {'X-CSRF-TOKEN': getCookie('csrftoken')},
                     dataType: 'json',
                     sequentialUploads: true,
                     add: function (e, data) {    
@@ -182,7 +182,7 @@
                 $.ajax({
                     method: 'DELETE',
                     url: API_ENDPOINT + 'training/instructor/chapters/' + uuid + '/',
-                    headers: {'X-CSRFToken': Cookies.get('csrftoken')},
+                    headers: {'X-CSRFToken': getCookie('csrftoken')},
                     xhrFields: {withCredentials: true},
                     contentType: 'application/json; charset=utf-8',
                     dataType: 'json',
