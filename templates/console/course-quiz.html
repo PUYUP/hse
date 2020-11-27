@@ -1,11 +1,12 @@
 {% extends 'console/base.html' %}
 
 {% block content %}
+    <span class="badge badge-warning">{{ position }}</span> <br />
     <h3>{{ queryset.label }}</h3>
     
     <div class="questions">
         {% for item in quiz_question %}
-            <div class="question-item mb-4 card" data-uuid="{{ item.question.uuid }}">
+            <div class="question-item mb-4 card" data-question-uuid="{{ item.question.uuid }}" data-quiz-question-uuid="{{ item.uuid }}">
                 <div class="card-body">
                     <div class="block">
                         <div class="form-group w-100">
@@ -22,7 +23,7 @@
                         
                         <div class="choice">
                             {% for c in item.question.choice.all %}
-                                <div class="choice-{{ forloop.counter }}" data-uuid="{{ c.uuid }}">
+                                <div class="choice-{{ forloop.counter }}" data-choice-uuid="{{ c.uuid }}">
                                     <div class="d-flex w-full">
                                         <div class="form-group" style="width: 50px;">
                                             <input type="text" class="form-control text-center identifier" name="choice-identifier[{{ forloop.counter }}]" value="{{ c.identifier }}" disabled>
@@ -131,10 +132,17 @@
                 }
             });
             
-            $(wrapper).on('click', '.remove-question', function(e) {
-                e.preventDefault(); 
+            var removeQuestionUUID = [];
 
-                $(this).closest('.question-item').remove(); 
+            $(wrapper).on('click', '.remove-question', function(e) {
+                e.preventDefault();
+
+                var el = $(this).closest('.question-item');
+                var questionUUID = el.attr('data-question-uuid');
+
+                removeQuestionUUID.push({'uuid': questionUUID});
+
+                el.remove(); 
                 x--;
 
                 var items = $('.questions > div');
@@ -159,14 +167,19 @@
                 var questionValid = true;
                 var questionChoice = [];
                 var a = [];
+                var quizQuestionUUID = [];
 
                 $.each(items, function(i, v) {
                     var question = $(v).find('input.question').val();
                     var description = $(v).find('textarea.description').val();
-                    var questionUUID = $(v).attr('data-uuid');
+                    var questionUUID = $(v).attr('data-question-uuid');
+                    var quizQUUID = $(v).attr('data-quiz-question-uuid');
                     var choiceEl = $(v).find('.choice > div');
                     var choices = [];
                     var b = [];
+
+                    quizQuestionUUID.push(quizQUUID);
+                    localStorage.setItem('quiz_question_uuids', JSON.stringify(quizQuestionUUID));
 
                     if (!question) {
                         alert('Question not filled');
@@ -175,7 +188,7 @@
                     
                     $.each(choiceEl, function(ci, cv) {
                         var is_true = $(cv).find('input.is-true:checked').val();
-                        var cUUID = $(cv).attr('data-uuid');
+                        var cUUID = $(cv).attr('data-choice-uuid');
                         var label = $(cv).find('input.answer').val();
                         var identifier = $(cv).find('input.identifier').val();
 
@@ -221,8 +234,33 @@
                 // All valid.
                 if (questionValid && choiceValid) {
                     saveQuestion(questions, a);
+
+                    // Remove questions
+                    if (removeQuestionUUID.length > 0) {
+                        removeQuestion(removeQuestionUUID);
+                    }
                 }
             });
+            
+
+            /***
+             * Remove questions
+             */
+            var removeQuestion = function(context) {
+                $.ajax({
+                    method: 'DELETE',
+                    url: API_ENDPOINT + 'training/instructor/questions/delete/',
+                    headers: {'X-CSRFToken': Cookies.get('csrftoken')},
+                    xhrFields: {withCredentials: true},
+                    contentType: 'application/json; charset=utf-8',
+                    dataType: 'json',
+                    data: JSON.stringify(context),
+                    cache: false,
+                    success: function(response) {
+                        
+                    }
+                });
+            }
 
 
             /**
@@ -238,7 +276,7 @@
 
                 $.ajax({
                     method: 'PUT',
-                    url: API_ENDPOINT + 'training/instructor/questions/',
+                    url: API_ENDPOINT + 'training/instructor/questions/?position={{ position }}&course_uuid={{ queryset.uuid }}',
                     headers: {'X-CSRFToken': Cookies.get('csrftoken')},
                     xhrFields: {withCredentials: true},
                     contentType: 'application/json; charset=utf-8',
@@ -293,6 +331,9 @@
                         {% if not quiz %}
                             saveQuiz();
                         {% else %}
+                            var t = localStorage.getItem('quiz_question_uuids'),
+                                t = t ? JSON.parse(t) : '[]';
+
                             var x = localStorage.getItem('question_uuids');
                             var y = x ? JSON.parse(x) : [];
                             var quizQuestion = [];
@@ -301,14 +342,18 @@
                                 var z = {
                                     'quiz': '{{ quiz.uuid }}',
                                     'question': v,
-                                    'sort': i + questionCount,
+                                    'sort': i + +questionCount
+                                }
+
+                                if (t.length > 0) {
+                                    z['uuid'] = t[i];
                                 }
 
                                 quizQuestion.push(z);
                             });
 
                             if (quizQuestion.length > 0) {
-                                //saveQuizQuestion(quizQuestion);
+                                saveQuizQuestion(quizQuestion);
                             }
                         {% endif %}
                     }
@@ -384,6 +429,8 @@
                             }
 
                             saveCourseQuiz(x);
+                        {% else %}
+                            window.location.reload();
                         {% endif %}
                     }
                 });
@@ -406,6 +453,7 @@
                     cache: false,
                     success: function(response) {
                         localStorage.removeItem('quiz_uuid');
+                        window.location.reload();
                     }
                 });
             }

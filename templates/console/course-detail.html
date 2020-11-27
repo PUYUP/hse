@@ -40,7 +40,7 @@
 
     <button class="btn btn-sm pl-4 pr-4 btn-primary" data-course-uuid="{{ queryset.uuid }}" data-toggle="modal" data-target="#chapter-modal">Add Materi</button>
     <a href="{% url 'course_quiz' queryset.uuid %}?position=survey" class="btn btn-sm pl-4 pr-4 btn-info ml-4">Add/Edit Survey Question</a>
-    <a href="{% url 'course_quiz' queryset.uuid %}?position=evalueate" class="btn btn-sm pl-4 pr-4 btn-secondary ml-4">Add/Edit Evaluate Question</a>
+    <a href="{% url 'course_quiz' queryset.uuid %}?position=evaluate" class="btn btn-sm pl-4 pr-4 btn-secondary ml-4">Add/Edit Evaluate Question</a>
 
     <!-- Modal -->
     <div class="modal fade" id="chapter-modal" data-backdrop="static" data-keyboard="false" aria-labelledby="chapter-modalLabel" aria-hidden="true">
@@ -55,7 +55,7 @@
 
                 <div class="modal-body">
                     <div class="form-group">
-                        <label for="label">Label</label>
+                        <label for="label">Label *</label>
                         <input type="text" class="form-control" name="label" id="label" placeholder="E.g: Perkenalan">
                     </div>
 
@@ -81,7 +81,10 @@
 
         <ul class="list-unstyled">
             {% for item in chapter %}
-                <li>{{ item.label }}</li>
+                <li class="d-flex w-100 border-top pt-2 mt-2">
+                    <div>{{ item.label }}</div>
+                    <a href="{% url 'chapter_editor' item.uuid %}" class="btn btn-warning btn-sm ml-auto">Edit</a>
+                </li>
             {% endfor %}
         </ul>
     {% endif %}
@@ -144,7 +147,7 @@
                         $(uploadZoneEl).find('.progress').addClass('d-none');
 
                         // Refresh page.
-                        if (result) window.location.reload();}
+                        if (result) window.location.reload();
                     },
                     stop: function (e) {
                         var uploadZoneEl = $(e.target).closest('#upload-zone');

@@ -2,7 +2,7 @@
 {% load crispy_forms_tags %}
 
 {% block content %}
-    <form action="{% url 'course_editor' queryset.uuid %}" method="POST" enctype="multipart/form-data">
+    <form action="{% if queryset %}{% url 'course_editor' queryset.uuid %}{% else %}{% url 'course_editor' %}{% endif %}" method="POST" enctype="multipart/form-data">
         {% csrf_token %}
         {{ form|crispy }}
         

@@ -1,4 +1,5 @@
 import os
+from django.core.exceptions import ObjectDoesNotExist
 
 from django.db import transaction
 
@@ -33,8 +34,30 @@ class ChapterSerializer(serializers.ModelSerializer):
         course = validated_data.get('course')
         instance = Chapter.objects.create(**validated_data)
 
-        material = Material.objects.create(course=course, chapter=instance)
         if file:
+            material = Material.objects.create(course=course, chapter=instance)
             handle_upload_material(material, file)
 
+        return instance
+
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        request = self.context.get('request')
+        file = request.FILES.get('file')
+
+        for key, value in validated_data.items():
+            if hasattr(instance, key):
+                old_value = getattr(instance, key, None)
+                if old_value != value:
+                    setattr(instance, key, value)
+
+        if file:
+            try:
+                material = instance.material.first()
+            except ObjectDoesNotExist:
+                material = Material.objects.create(course=instance.course, chapter=instance)
+                
+            handle_upload_material(material, file)
+
+        instance.save()
         return instance

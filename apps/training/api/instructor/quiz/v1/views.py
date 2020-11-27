@@ -4,9 +4,10 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 
 from rest_framework import viewsets, status as response_status
-from rest_framework.exceptions import NotAcceptable
+from rest_framework.exceptions import NotAcceptable, NotFound
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.decorators import action
 
 from utils.generals import get_model
 from .serializers import ChoiceSerializer, QuestionSerializer, QuizQuestionSerializer, QuizSerializer
@@ -53,10 +54,16 @@ class QuestionApiView(viewsets.ViewSet):
         for item in request.data:
             update_fields.extend(list(item.keys()))
 
-        update_fields = list(dict.fromkeys(update_fields))
-        queryset = self.queryset().filter(uuid__in=update_uuids).only(*update_fields)
+        position = request.GET.get('position')
+        course_uuid = request.GET.get('course_uuid')
 
-        context = {'request': request}
+        update_fields = list(dict.fromkeys(update_fields))
+        queryset = self.queryset() \
+            .filter(uuid__in=update_uuids, quiz_question__quiz__course_quiz__position=position,
+                    quiz_question__quiz__course_quiz__course__uuid=course_uuid) \
+            .only(*update_fields)
+
+        context = {'request': request, 'position': position}
         serializer = QuestionSerializer(queryset, data=request.data, context=context, many=True)
         
         if serializer.is_valid(raise_exception=True):
@@ -67,6 +74,23 @@ class QuestionApiView(viewsets.ViewSet):
 
             return Response(serializer.data, status=response_status.HTTP_200_OK)
         return Response(serializer.errors, status=response_status.HTTP_406_NOT_ACCEPTABLE)
+
+    @method_decorator(never_cache)
+    @transaction.atomic
+    @action(methods=['DELETE'], detail=False, permission_classes=[IsAuthenticated, IsAdminUser],
+            url_path='delete', url_name='delete')
+    def delete(self, request, format=None):
+        uuids = [item.get('uuid', None) for item in request.data]
+
+        try:
+            queryset = self.queryset().filter(uuid__in=uuids)
+        except (ValidationError, Exception) as e:
+            raise NotAcceptable(detail=str(e))
+
+        if queryset.exists():
+            queryset.delete()
+            return Response(status=response_status.HTTP_204_NO_CONTENT)
+        raise NotFound()
 
 
 class ChoiceApiView(viewsets.ViewSet):

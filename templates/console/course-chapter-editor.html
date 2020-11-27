@@ -1,0 +1,148 @@
+{% extends 'console/base.html' %}
+{% load static crispy_forms_tags %}
+
+{% block content %}
+    <h3>Materi: {{ queryset.label }}</h3>
+
+    <div class="form-group">
+        <label for="label">Label *</label>
+        <input type="text" class="form-control" name="label" id="label" value="{{ queryset.label }}" placeholder="E.g: Perkenalan">
+    </div>
+    
+    {% if material.exists %}
+        {% for item in material %}
+            <div id="upload-zone" class="form-group">
+                <label for="fileupload">File (Video, PDF or Image)</label>
+                <input type="file" class="form-control" name="file" id="fileupload">
+                <div id="filename" class="mt-1">{{ item.media.name }}</div>
+
+                <div class="progress mb-2 d-none">
+                    <div class="progress-bar" role="progressbar" style="width: 25%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">25%</div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div id="upload-zone" class="form-group">
+            <label for="fileupload">File (Video, PDF or Image)</label>
+            <input type="file" class="form-control" name="file" id="fileupload">
+            <div id="filename" class="mt-1"></div>
+
+            <div class="progress mb-2 d-none">
+                <div class="progress-bar" role="progressbar" style="width: 25%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">25%</div>
+            </div>
+        </div>
+    {% endif %}
+
+    <button type="button" id="upload" class="btn btn-info pl-4 pr-4">Upload</button>
+{% endblock %}
+
+{% block js %}
+    <script src="{% static 'jquery-file-upload/jquery.iframe-transport.js' %}" defer></script>
+    <script src="{% static 'jquery-file-upload/vendor/load-image.all.min.js' %}" defer></script>
+    <script src="{% static 'jquery-file-upload/vendor/jquery.ui.widget.js' %}" defer></script>
+    <script src="{% static 'jquery-file-upload/jquery.fileupload.js' %}" defer></script>
+    <script src="{% static 'jquery-file-upload/jquery.fileupload-process.js' %}" defer></script>
+    <script src="{% static 'jquery-file-upload/jquery.fileupload-image.js' %}" defer></script>
+    <script src="{% static 'jquery-file-upload/jquery.fileupload-validate.js' %}" defer></script>
+
+    <script type="text/javascript">
+        (function() {
+            'use strict';
+            
+            window.addEventListener('DOMContentLoaded', function() {
+                // ...
+                // OPEN CHAPTER FORM
+                // ...
+                $(document).on('shown.bs.modal', '#chapter-modal', function (e) {
+                    var course_uuid = $(e.relatedTarget).attr('data-course-uuid');
+                });
+
+
+                // ...
+                // CREATE CHAPTER
+                // ...
+                var file_changed = false;
+
+                $('#fileupload').fileupload({
+                    method: 'PATCH',
+                    url: API_ENDPOINT + 'training/instructor/chapters/{{ queryset.uuid }}/',
+                    headers: {'X-CSRFToken': Cookies.get('csrftoken')},
+                    dataType: 'json',
+                    sequentialUploads: true,
+                    add: function (e, data) {    
+                        var fname = data?.files[0].name;
+
+                        file_changed = true;
+
+                        $(e.target).closest('.form-group').find('#filename').html(`<p class="mt-2 mb-0">${fname}`);
+
+                        $("#upload").off('click').on('click', function () {
+                            data.submit();
+                        });
+                    },
+                    progress: function (e, data) {
+                        var progress = parseInt(data.loaded / data.total * 100, 10);
+                        var strProgress = progress + "%";
+                        var uploadZoneEl = $(e.target).closest('#upload-zone');
+
+                        $(uploadZoneEl).find('.progress').removeClass('d-none');
+                        $(uploadZoneEl).find('.progress-bar').css({ 'width': strProgress });
+                        $(uploadZoneEl).find('.progress-bar').text(strProgress);
+                    },
+                    done: function (e, data) {
+                        var result = data.result;
+                        var uploadZoneEl = $(e.target).closest('#upload-zone');
+
+                        $(uploadZoneEl).find('.progress').addClass('d-none');
+
+                        // Refresh page.
+                        if (result) window.location.reload();
+                    },
+                    stop: function (e) {
+                        var uploadZoneEl = $(e.target).closest('#upload-zone');
+                        $(uploadZoneEl).find('.progress').addClass('d-none');
+                    }
+                });
+
+
+                // ...
+                // SET PARAMS
+                // ...
+                $('#fileupload').bind('fileuploadsubmit', function (e, data) {
+                    data.formData = {
+                        'course': '{{ queryset.course.uuid }}',
+                        'label': $('input#label').val(),
+                    }
+                });
+
+
+                // ...
+                // UPDATE NO-FILE
+                // ...
+                if (file_changed == false) {
+                    $(document).on('click', '#upload', function(e) {
+                        e.preventDefault();
+
+                        var context = {
+                            'label': $('input#label').val(),
+                        }
+
+                        $.ajax({
+                            method: 'PATCH',
+                            url: API_ENDPOINT + 'training/instructor/chapters/{{ queryset.uuid }}/',
+                            headers: {'X-CSRFToken': Cookies.get('csrftoken')},
+                            xhrFields: {withCredentials: true},
+                            contentType: 'application/json; charset=utf-8',
+                            dataType: 'json',
+                            data: JSON.stringify(context),
+                            cache: false,
+                            success: function(response) {
+                                window.location.reload();
+                            }
+                        });
+                    });
+                }
+            });
+        })();
+    </script>
+{% endblock %}

@@ -2,7 +2,7 @@ from django.urls import path
 
 from .console.home import HomeView
 from .console.learner import LearnerView
-from .console.course import CourseView, CourseEditorView, CourseDetailView, CourseQuizView
+from .console.course import ChapterView, CourseView, CourseEditorView, CourseDetailView, CourseQuizView
 
 urlpatterns = [
     path('console/', HomeView.as_view(), name='home'),
@@ -12,4 +12,5 @@ urlpatterns = [
     path('console/course/<uuid:uuid>/', CourseDetailView.as_view(), name='course_detail'),
     path('console/course/<uuid:uuid>/editor/', CourseEditorView.as_view(), name='course_editor'),
     path('console/course/<uuid:uuid>/quiz/', CourseQuizView.as_view(), name='course_quiz'),
+    path('console/chapter/<uuid:uuid>/editor/', ChapterView.as_view(), name='chapter_editor'),
 ]

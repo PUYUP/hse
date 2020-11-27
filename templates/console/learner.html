@@ -1,4 +1,5 @@
 {% extends 'console/base.html' %}
+{% load listing %}
 
 {% block content %}
     <table class="table table-striped mt-4 bg-white">
@@ -18,7 +19,7 @@
         </thead>
 
         <tbody>
-            {% for item in users %}
+            {% for item in queryset_pagination %}
                 <tr>    
                     <td>{{ item.id }}</td>
                     <td>{{ item.first_name }}</td>
@@ -34,4 +35,6 @@
             {% endfor %}
         </tbody>
     </table>
+
+    {% pagination pagination %}
 {% endblock %}

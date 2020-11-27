@@ -11,10 +11,11 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 from utils.generals import get_model
 from utils.pagination import Pagination
-from .forms import CourseForm
+from .forms import ChapterForm, CourseForm
 
 Course = get_model('training', 'Course')
 CourseQuiz = get_model('training', 'CourseQuiz')
+Chapter = get_model('training', 'Chapter')
 
 
 @method_decorator(login_required, name='dispatch')
@@ -131,11 +132,53 @@ class CourseQuizView(View):
         if course_quiz:
             quiz = getattr(course_quiz, 'quiz', None)
             if quiz:
-                quiz_question = quiz.quiz_question.all()
+                quiz_question = quiz.quiz_question.all().order_by('sort')
 
         self.context['position'] = self.position
         self.context['queryset'] = queryset
         self.context['course_quiz'] = course_quiz
         self.context['quiz_question'] = quiz_question
         self.context['quiz'] = quiz
+        return render(self.request, self.template_name, self.context)
+
+
+@method_decorator(login_required, name='dispatch')
+class ChapterView(View):
+    template_name = 'console/course-chapter-editor.html'
+    context = {}
+    form = ChapterForm
+
+    def get_object(self, uuid=None, is_update=False):
+        try:
+            if is_update:
+                query = Chapter.objects.select_for_update().get(uuid=uuid)
+            else:
+                query = Chapter.objects.get(uuid=uuid)
+        except ObjectDoesNotExist:
+            query = None
+        
+        return query
+
+    def get(self, request, uuid=None):
+        queryset = self.get_object(uuid=uuid)
+        material = None
+
+        if queryset:
+            material = queryset.material.all()
+
+        self.context['queryset'] = queryset
+        self.context['form'] = self.form(instance=queryset)
+        self.context['material'] = material
+        return render(self.request, self.template_name, self.context)
+
+    @transaction.atomic()
+    def post(self, request, uuid=None):
+        queryset = self.get_object(uuid=uuid, is_update=True)
+        form = self.form(request.POST, instance=queryset)
+
+        if form.is_valid():
+            f = form.save()
+            return redirect('course_detail', uuid=queryset.course.uuid)
+
+        self.context['form'] = form
         return render(self.request, self.template_name, self.context)
