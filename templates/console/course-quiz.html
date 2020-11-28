@@ -1,6 +1,7 @@
 {% extends 'console/base.html' %}
 
 {% block content %}
+    <button onclick="goBack()" class="btn btn-secondary btn-sm pl-3 pr-3 mb-4">Go Back</button> <br />
     <span class="badge badge-warning">{{ position }}</span> <br />
     <h3>{{ queryset.label }}</h3>
     
@@ -460,6 +461,13 @@
                     cache: false,
                     success: function(response) {
                         localStorage.removeItem('quiz_uuid');
+
+                        Swal.fire(
+                            'Informasi',
+                            'Berhasil disimpan. Menyegarkan...',
+                            'success'
+                        );
+
                         window.location.reload();
                     }
                 });
@@ -481,6 +489,13 @@
                     cache: false,
                     success: function(response) {
                         localStorage.removeItem('quiz_uuid');
+
+                        Swal.fire(
+                            'Informasi',
+                            'Berhasil disimpan. Menyegarkan...',
+                            'success'
+                        );
+
                         window.location.reload();
                     }
                 });

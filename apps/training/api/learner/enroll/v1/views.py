@@ -1,7 +1,7 @@
 from django.db import transaction, IntegrityError
-from django.db.models import Count, Q
+from django.db.models import Count, Q, F, Value
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from django.db.models import query
+from django.db.models.fields import BooleanField
 from django.views.decorators.cache import never_cache
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
@@ -103,8 +103,12 @@ class SimulationApiView(viewsets.ViewSet):
 
     def queryset(self):
         qs = Simulation.objects \
-            .prefetch_related('learner', 'enroll', 'enroll_session', 'course', 'course_session') \
+            .prefetch_related('learner', 'enroll', 'enroll_session', 'course', 'course__chapter', 'course_session') \
             .select_related('learner', 'enroll', 'enroll_session', 'course', 'course_session') \
+            .annotate(
+                chapter_done_count=Count('simulation_chapter', distinct=True),
+                chapter_total_count=Count('course__chapter', distinct=True)
+            ) \
             .filter(learner__id=self.request.user.id)
 
         return qs

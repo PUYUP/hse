@@ -78,6 +78,7 @@ class CourseSerializer(DynamicFieldsModelSerializer, serializers.ModelSerializer
     course_quiz = CourseQuizSerializer(many=True, read_only=True)
     enroll_uuid = serializers.CharField(read_only=True)
     is_enrolled = serializers.BooleanField(read_only=True)
+    last_simulation_uuid = serializers.CharField(read_only=True)
 
     class Meta:
         model = Course

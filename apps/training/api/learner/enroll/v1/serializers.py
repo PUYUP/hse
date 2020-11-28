@@ -98,10 +98,16 @@ class SimulationRetrieveSerializer(serializers.ModelSerializer):
     course = CourseSerializer(read_only=True)
     course_session = serializers.SlugRelatedField(slug_field='uuid', queryset=CourseSession.objects.all())
     simulation_quiz = SimulationQuizSerializer(many=True, read_only=True)
+    chapter_done_count = serializers.IntegerField(read_only=True)
+    chapter_total_count = serializers.IntegerField(read_only=True)
+    is_chapter_done = serializers.SerializerMethodField()
 
     class Meta:
         model = Simulation
         fields = '__all__'
+
+    def get_is_chapter_done(self, obj):
+        return obj.chapter_done_count == obj.chapter_total_count
 
 
 class SimulationChapterSerializer(serializers.ModelSerializer):
@@ -210,6 +216,20 @@ class EnrollSerializer(serializers.ModelSerializer):
 
         # Create enroll_session
         for item in enroll_session:
-            enroll_session_obj, _created = EnrollSession.objects.get_or_create(enroll=instance, **item)
+            enroll_session_obj, created = EnrollSession.objects.get_or_create(enroll=instance, **item)
+
+            if enroll_session_obj and not created:
+                learner = instance.learner
+                course = instance.course
+                course_session = enroll_session_obj.course_session
+
+                simulation, _simulation_is_created = Simulation.objects \
+                    .get_or_create(learner=learner, course=course, course_session=course_session,
+                                   enroll=instance, enroll_session=enroll_session_obj, is_done=False)
+
+                # Simulation quiz survey
+                course_quiz = CourseQuiz.objects.get(course__id=course.id, position='survey')
+                SimulationQuiz.objects.create(simulation=simulation, course=course, course_quiz=course_quiz,
+                                            quiz=course_quiz.quiz)
 
         return instance

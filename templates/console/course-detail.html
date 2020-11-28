@@ -2,6 +2,8 @@
 {% load static crispy_forms_tags %}
 
 {% block content %}
+    <button onclick="goBack()" class="btn btn-secondary btn-sm pl-3 pr-3 mb-4">Go Back</button>
+
     <div class="form-group d-flex">
         <h3>{{ queryset.label }}</h3>
 
@@ -150,7 +152,15 @@
                         $(uploadZoneEl).find('.progress').addClass('d-none');
 
                         // Refresh page.
-                        if (result) window.location.reload();
+                        if (result) {
+                            Swal.fire(
+                                'Informasi',
+                                'Berhasil disimpan. Menyegarkan...',
+                                'success'
+                            );
+
+                            window.location.reload();
+                        }
                     },
                     stop: function (e) {
                         var uploadZoneEl = $(e.target).closest('#upload-zone');

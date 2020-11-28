@@ -40,6 +40,8 @@ class RootApiView(APIView):
                                        format=format, current_app='training_api:learner'),
                     'chapters': reverse('training_api:learner:chapter-list', request=request,
                                         format=format, current_app='training_api:learner'),
+                    'categories': reverse('training_api:learner:category-list', request=request,
+                                          format=format, current_app='training_api:learner'),
                 },
                 'instructor': {
                     'courses': reverse('training_api:instructor:course-list', request=request,

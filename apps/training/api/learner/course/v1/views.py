@@ -24,6 +24,7 @@ CourseSession = get_model('training', 'CourseSession')
 Quiz = get_model('training', 'Quiz')
 Enroll = get_model('training', 'Enroll')
 SimulationChapter = get_model('training', 'SimulationChapter')
+Simulation = get_model('training', 'Simulation')
 
 # Define to avoid used ...().paginate__
 _PAGINATOR = LimitOffsetPagination()
@@ -33,7 +34,7 @@ class CourseApiView(viewsets.ViewSet):
     lookup_field = 'uuid'
     permission_classes = (IsAuthenticated,)
 
-    def queryset(self, start_date=None):
+    def queryset(self, start_date=None, is_single=False):
         if start_date:
             dt = parser.parse(start_date)
             dt_format = dt.strftime('%Y-%m-%d')
@@ -54,12 +55,19 @@ class CourseApiView(viewsets.ViewSet):
             day_start, day_end = monthrange(int(year), int(month))
             date_end = parser.parse('{}-{}-{}'.format(year, month, day_end))
             date_end_format = date_end.strftime('%Y-%m-%d')
+            date_start = parser.parse('{}-{}-{}'.format(year, month, day_start))
+            date_start_format = date_start.strftime('%Y-%m-%d')
     
-            q_start_date = Q(course_session__start_date__range=(today_fmt, date_end_format))
-            q_course_session = Q(start_date__range=(today_fmt, date_end_format))
+            q_start_date = Q(course_session__start_date__range=(date_start_format, date_end_format))
+            q_course_session = Q(start_date__range=(date_start_format, date_end_format))
         
         course_session_objs = CourseSession.objects.filter(q_course_session).order_by('start_date')
         enroll_obj = Enroll.objects.filter(course__uuid=OuterRef('uuid'), learner__id=self.request.user.id)
+        simulation = Simulation.objects.filter(course__uuid=OuterRef('uuid'), is_done=False)
+
+        if (is_single):
+            course_session_objs = None
+            q_start_date = Q()
 
         qs = Course.objects \
             .prefetch_related('creator', 'category', 'chapter', Prefetch('course_session', queryset=course_session_objs)) \
@@ -71,7 +79,8 @@ class CourseApiView(viewsets.ViewSet):
                     distinct=True
                 ),
                 enroll_uuid=Subquery(enroll_obj.values('uuid')),
-                is_enrolled=Exists(enroll_obj)
+                is_enrolled=Exists(enroll_obj),
+                last_simulation_uuid=Subquery(simulation.values('uuid')[:1])
             ) \
             .filter(is_active=True, course_session_count__gt=0)
     
@@ -81,11 +90,15 @@ class CourseApiView(viewsets.ViewSet):
         context = {'request': request}
         start_date = request.query_params.get('start_date', None)
         keyword = request.query_params.get('keyword', None)
+        category_uuid = request.query_params.get('category_uuid', None)
 
         queryset = self.queryset(start_date=start_date)
         
         if keyword:
             queryset = queryset.filter(label__icontains=keyword)
+
+        if category_uuid:
+            queryset = queryset.filter(category__uuid=category_uuid)
 
         queryset_paginator = _PAGINATOR.paginate_queryset(queryset, request)
         serializer = CourseSerializer(queryset_paginator, many=True, context=context,
@@ -97,9 +110,9 @@ class CourseApiView(viewsets.ViewSet):
 
     def retrieve(self, request, uuid=None, format=None):
         context = {'request': request}
-    
+
         try:
-            queryset = self.queryset().get(uuid=uuid)
+            queryset = self.queryset(is_single=True).get(uuid=uuid)
         except (ObjectDoesNotExist, ValidationError) as e:
             raise NotAcceptable(detail=repr(e))
     
