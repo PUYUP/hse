@@ -1,13 +1,22 @@
 from django.db import transaction
-from django.contrib.contenttypes.models import ContentType
+from django.utils import timezone
 
 from utils.generals import get_model
 
 Quiz = get_model('training', 'Quiz')
 CourseQuiz = get_model('training', 'CourseQuiz')
+CourseSession = get_model('training', 'CourseSession')
 Simulation = get_model('training', 'Simulation')
 SimulationQuiz = get_model('training', 'SimulationQuiz')
 SimulationChapter = get_model('training', 'SimulationChapter')
+
+
+@transaction.atomic
+def course_save_handler(sender, instance, created, **kwargs):
+    if created:
+        course_session = CourseSession.objects \
+            .create(course=instance, start_date=timezone.now(),
+                    end_date=timezone.now(), max_repeated=0)
 
 
 @transaction.atomic

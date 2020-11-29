@@ -171,8 +171,8 @@ class AbstractCourseQuiz(models.Model):
             )
         ]
 
-    # def __str__(self):
-    #     return self.quiz.label
+    def __str__(self):
+        return self.course.label
 
 
 class AbstractCertificate(models.Model):
