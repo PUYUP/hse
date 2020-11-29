@@ -39,4 +39,81 @@
             </tr>
         </tbody>
     </table>
+
+    <h4>Training yang Telah Diikuti</h4>
+
+    <ul class="list-unstyled" id="enroll-result">
+    </ul>
+{% endblock %}
+
+{% block js %}
+    <script type="text/javascript">
+        (function() {
+            'use strict';
+
+            window.addEventListener('DOMContentLoaded', function() {
+                var getEnroll = function() {
+                    $.ajax({
+                        method: 'GET',
+                        url: API_ENDPOINT + 'training/learner/enrolls/?user_uuid={{ uuid }}',
+                        headers: {'X-CSRFToken': '{{ csrf_token }}'},
+                        xhrFields: {withCredentials: true},
+                        contentType: 'application/json; charset=utf-8',
+                        dataType: 'json',
+                        cache: false,
+                        success: function(response) {
+                            var results = response.results;
+                            var item = '';
+
+                            $.each(results, function(i, v) {
+                                item += `<li class="media border-top pt-3 mt-3">
+                                    <div class="d-flex w-100">
+                                        <div class="block mr-auto" style="width: 150px">
+                                            <img src="${v.course_cover}" class="w-100 h-auto">
+                                        </div>
+
+                                        <div class="w-100 pl-4">
+                                            <h5 class="font-weight-bold mb-1">${v.course_label}</h5>
+
+                                            <ul class="list-unstyled">`;
+                                                $.each(v.enroll_session, function(vi, vv) {
+                                                    $.each(vv.simulation, function(si, sv) {
+                                                        item += `<li class="media d-block mt-4">
+                                                            <h6>${moment(sv.create_date).format('DD/MMM/YYYY, HH:mm a')}</h6>
+
+                                                            <div class="row">
+                                                                <div class="col-6">
+                                                                    <div class="border text-center p-4 bg-white">
+                                                                        <p class="text-sm leading-4">Score sebelum menonton video</p>
+                                                                        <div class="font-bold text-4xl">${sv.quiz_survey_score}</div>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col-6">
+                                                                    <div class="border text-center p-4 bg-white">
+                                                                        <p class="text-sm leading-4">Score sesudah menonton video</p>
+                                                                        <div class="font-bold text-4xl">${sv.quiz_evaluate_score}</div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </li>`;
+                                                    });
+                                                });
+                                            item += `</ul>
+                                        </div>
+                                    </div>
+                                </li>`;
+                            });
+
+                            $('#enroll-result').html(item);
+
+                            console.log(response);
+                        }
+                    });
+                }
+
+                getEnroll();
+            });
+        })();
+    </script>
 {% endblock %}

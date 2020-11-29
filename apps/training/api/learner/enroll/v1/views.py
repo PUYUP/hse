@@ -53,10 +53,14 @@ class EnrollApiView(viewsets.ViewSet):
     def list(self, request, format=None):
         context = {'request': request}
         course_uuid = request.query_params.get('course_uuid')
+        user_uuid = request.query_params.get('user_uuid')
         queryset = self.queryset()
 
         if course_uuid:
             queryset = queryset.filter(course__uuid=course_uuid)
+
+        if user_uuid:
+            queryset = queryset.filter(learner__uuid=user_uuid)
 
         queryset_paginator = _PAGINATOR.paginate_queryset(queryset, request)
         serializer = EnrollSerializer(queryset_paginator, many=True, context=context)

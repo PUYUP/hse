@@ -1,6 +1,5 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
-from django.db import utils
 from django.views import View
 from django.shortcuts import render
 from django.conf import settings
@@ -48,5 +47,6 @@ class LearnerDetailView(View):
         except ObjectDoesNotExist:
             queryset = None
         
+        self.context['uuid'] = uuid
         self.context['queryset'] = queryset
         return render(request, self.template_name, self.context)
