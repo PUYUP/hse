@@ -72,6 +72,7 @@ class LearnerView(View):
         self.context['queryset'] = queryset
         self.context['queryset_pagination'] = queryset_pagination
         self.context['pagination'] = pagination
+        self.context['per_page'] = settings.PAGINATION_PER_PAGE
         return render(self.request, self.template_name, self.context)
 
 

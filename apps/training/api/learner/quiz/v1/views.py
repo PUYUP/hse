@@ -44,7 +44,8 @@ class QuizQuestionApiView(viewsets.ViewSet):
             .annotate(
                 answer_uuid=Subquery(answer[:1].values('uuid')),
                 answer_choice_uuid=Subquery(answer[:1].values('choice__uuid'))
-            )
+            ) \
+            .order_by('sort')
 
         return query
 

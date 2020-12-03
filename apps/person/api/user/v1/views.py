@@ -1,9 +1,8 @@
-import operator
-from functools import reduce
-
 from django.conf import settings
 from django.db import transaction
-from django.db.models import Prefetch, Q, Case, When, Value
+from django.db.models import Prefetch, Q, F, Case, When, Value, Count, Subquery, OuterRef, Case, When
+from django.db.models.fields import IntegerField
+from django.db.models.functions import Coalesce
 from django.utils.translation import ugettext_lazy as _
 from django.utils.decorators import method_decorator
 from django.contrib.auth.password_validation import validate_password
@@ -20,7 +19,7 @@ from django.contrib.auth.tokens import default_token_generator
 
 # THIRD PARTY
 from rest_framework import status as response_status, viewsets
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound, NotAcceptable
@@ -47,6 +46,9 @@ User = get_model('person', 'User')
 Account = get_model('person', 'Account')
 Profile = get_model('person', 'Profile')
 VerifyCode = get_model('person', 'VerifyCode')
+
+Simulation = get_model('training', 'Simulation')
+Quiz = get_model('training', 'Quiz')
 
 # Define to avoid used ...().paginate__
 _PAGINATOR = LimitOffsetPagination()
@@ -79,8 +81,8 @@ class UserApiView(viewsets.ViewSet):
     lookup_field = 'uuid'
     permission_classes = (AllowAny,)
     permission_action = {
-        'list': [IsAuthenticated],
-        'retrieve': [IsAuthenticated],
+        'list': [IsAuthenticated, IsAdminUser],
+        'retrieve': [IsAuthenticated, IsAdminUser],
         'partial_update': [IsAuthenticated, IsCurrentUserOrReject],
     }
 
@@ -117,8 +119,52 @@ class UserApiView(viewsets.ViewSet):
 
     # Many objects
     def get_objects(self):
-        queryset = User.objects.prefetch_related(Prefetch('account'), Prefetch('profile')) \
-            .select_related('account', 'profile')
+        quiz = Quiz.objects \
+            .filter(simulation_quiz__simulation__uuid=OuterRef('uuid')) \
+            .annotate(
+                true_answer_survey=Count(
+                    'simulation_quiz__answer',
+                    distinct=True,
+                    filter=Q(simulation_quiz__answer__is_true=True, simulation_quiz__answer__course_quiz__position='survey')
+                ),
+                true_answer_evaluate=Count(
+                    'simulation_quiz__answer',
+                    distinct=True,
+                    filter=Q(simulation_quiz__answer__is_true=True, simulation_quiz__answer__course_quiz__position='evaluate')
+                ),
+                total_survey_question=Count('quiz_question', distinct=True),
+                total_evaluate_question=Count('quiz_question', distinct=True)
+            )
+
+        simulation = Simulation.objects \
+            .annotate(
+                quiz_survey_true_answer=Subquery(quiz.filter(course_quiz__position='survey').values('true_answer_survey')[:1]),
+                quiz_evaluate_true_answer=Subquery(quiz.filter(course_quiz__position='evaluate').values('true_answer_evaluate')[:1]),
+                total_survey_question=Subquery(quiz.filter(course_quiz__position='survey').values('total_survey_question')[:1]),
+                total_evaluate_question=Subquery(quiz.filter(course_quiz__position='evaluate').values('total_evaluate_question')[:1])
+            ) \
+            .filter(learner__uuid=OuterRef('uuid')) \
+            .order_by('-quiz_survey_true_answer', '-quiz_evaluate_true_answer')
+
+        queryset = User.objects.prefetch_related(Prefetch('account'), Prefetch('profile'),
+                                                 Prefetch('simulation')) \
+            .select_related('account', 'profile') \
+            .annotate(
+                simulation_count=Count('simulation', distinct=True),
+                quiz_survey_true_answer=Coalesce(Subquery(simulation.values('quiz_survey_true_answer')[:1]), 0),
+                quiz_evaluate_true_answer=Coalesce(Subquery(simulation.values('quiz_evaluate_true_answer')[:1]), 0),
+                total_survey_question=Coalesce(Subquery(simulation.values('total_survey_question')[:1]), 0),
+                total_evaluate_question=Coalesce(Subquery(simulation.values('total_evaluate_question')[:1]), 0),
+                survey_score=Case(
+                    When(Q(total_survey_question__gt=0), then=100/F('total_survey_question') * F('quiz_survey_true_answer')),
+                    output_field=IntegerField()
+                ),
+                evaluate_score=Case(
+                    When(Q(total_evaluate_question__gt=0), then=100/F('total_evaluate_question') * F('quiz_evaluate_true_answer')),
+                    output_field=IntegerField()
+                )
+            )
+
         return queryset
 
     # All Users
@@ -133,12 +179,20 @@ class UserApiView(viewsets.ViewSet):
 
         if keyword:
             queryset = queryset.filter(Q(username__icontains=keyword)
-                                       | Q(first_name__icontains=keyword))
+                                       | Q(first_name__icontains=keyword)
+                                       | Q(email__icontains=keyword)
+                                       | Q(profile__birthdate__icontains=keyword)
+                                       | Q(profile__company__icontains=keyword)
+                                       | Q(profile__position__icontains=keyword)
+                                       | Q(survey_score__icontains=keyword)
+                                       | Q(evaluate_score__icontains=keyword))
 
         queryset_paginator = _PAGINATOR.paginate_queryset(queryset, request)
         serializer = UserSerializer(queryset_paginator, many=True, context=context,
-                                    fields_used=('uuid', 'username', 'url', 'profile',
-                                                 'permalink',))
+                                    fields_used=('id', 'uuid', 'username', 'url', 'profile', 'account', 'email',
+                                                 'permalink', 'simulation_count', 'quiz_survey_true_answer',
+                                                 'quiz_evaluate_true_answer', 'total_survey_question',
+                                                 'total_evaluate_question', 'survey_score', 'evaluate_score',))
         pagination_result = build_result_pagination(self, _PAGINATOR, serializer)
         return Response(pagination_result, status=response_status.HTTP_200_OK)
 

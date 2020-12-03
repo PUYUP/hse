@@ -38,4 +38,4 @@ class User(AbstractUser):
     @property
     def permalink(self):
         from django.urls import reverse
-        return reverse('person_view:user_detail', kwargs={'uuid': self.uuid})
+        return reverse('learner_detail', kwargs={'uuid': self.uuid})

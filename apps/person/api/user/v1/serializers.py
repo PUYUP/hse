@@ -111,10 +111,19 @@ class UserSerializer(DynamicFieldsModelSerializer, serializers.ModelSerializer):
                                                    read_only=True, source='role')
     permalink = serializers.SerializerMethodField(read_only=True)
 
+    # training static
+    simulation_count = serializers.IntegerField(read_only=True)
+    quiz_survey_true_answer = serializers.IntegerField(read_only=True)
+    quiz_evaluate_true_answer = serializers.IntegerField(read_only=True)
+    total_survey_question = serializers.IntegerField(read_only=True)
+    total_evaluate_question = serializers.IntegerField(read_only=True)
+    survey_score = serializers.SerializerMethodField(read_only=True)
+    evaluate_score = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = User
         list_serializer_class = UserListSerializer
-        exclude = ('id', 'user_permissions', 'groups', 'date_joined',
+        exclude = ('user_permissions', 'groups', 'date_joined',
                    'is_superuser', 'last_login', 'is_staff',)
         extra_kwargs = {
             'password': {
@@ -175,6 +184,18 @@ class UserSerializer(DynamicFieldsModelSerializer, serializers.ModelSerializer):
 
             if settings.STRICT_EMAIL_DUPLICATE:
                 self.fields['email'].validators.extend([EmailDuplicateValidator()])
+
+    def get_survey_score(self, obj):
+        if obj.total_survey_question:
+            quiz_survey_score = int(100 /  obj.total_survey_question * obj.quiz_survey_true_answer)
+            return quiz_survey_score
+        return 0
+
+    def get_evaluate_score(self, obj):
+        if obj.total_evaluate_question:
+            quiz_evaluate_score = int(100 /  obj.total_evaluate_question * obj.quiz_evaluate_true_answer)
+            return quiz_evaluate_score
+        return 0
 
     def get_permalink(self, obj):
         request = self.context.get('request')
