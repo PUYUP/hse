@@ -57,13 +57,14 @@ class CourseApiView(viewsets.ViewSet):
             date_end_format = date_end.strftime('%Y-%m-%d')
             date_start = parser.parse('{}-{}-{}'.format(year, month, day_start))
             date_start_format = date_start.strftime('%Y-%m-%d')
-    
+
             q_start_date = Q(course_session__start_date__range=(date_start_format, date_end_format))
             q_course_session = Q(start_date__range=(date_start_format, date_end_format))
         
         course_session_objs = CourseSession.objects.filter(q_course_session).order_by('start_date')
         enroll_obj = Enroll.objects.filter(course__uuid=OuterRef('uuid'), learner__id=self.request.user.id)
-        simulation = Simulation.objects.filter(course__uuid=OuterRef('uuid'), is_done=False)
+        simulation = Simulation.objects.filter(course__uuid=OuterRef('uuid'), learner__id=self.request.user.id,
+                                               is_done=False)
 
         if (is_single):
             course_session_objs = None
