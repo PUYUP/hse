@@ -37,8 +37,7 @@ class EnrollApiView(viewsets.ViewSet):
     def queryset(self):
         query = Enroll.objects \
             .prefetch_related('learner', 'course', 'enroll_session') \
-            .select_related('learner', 'course') \
-            .filter(learner__id=self.request.user.id)
+            .select_related('learner', 'course')
 
         return query
 
