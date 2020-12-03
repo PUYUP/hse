@@ -172,6 +172,8 @@ class UserApiView(viewsets.ViewSet):
         context = {'request': self.request}
         role = request.query_params.get('role')
         keyword = request.query_params.get('keyword')
+        sort_column = request.query_params.get('sort_column')
+        sort_dir = request.query_params.get('sort_dir')
         queryset = self.get_objects()
 
         if role:
@@ -186,6 +188,62 @@ class UserApiView(viewsets.ViewSet):
                                        | Q(profile__position__icontains=keyword)
                                        | Q(survey_score__icontains=keyword)
                                        | Q(evaluate_score__icontains=keyword))
+        
+        sort = None
+        sort_dir_alias = None
+        if sort_dir == 'desc':
+            sort_dir_alias = '-'
+
+        # by first_name
+        if sort_column == '1':
+            sort = 'first_name'
+            if sort_dir_alias:
+                sort = '-first_name'
+
+        # by email
+        if sort_column == '2':
+            sort = 'email'
+            if sort_dir_alias:
+                sort = '-email'
+    
+        # by birtdate
+        if sort_column == '3':
+            sort = 'profile__birtdate'
+            if sort_dir_alias:
+                sort = '-profile__birtdate'
+
+        # by msisdn
+        if sort_column == '4':
+            sort = 'account__msisdn'
+            if sort_dir_alias:
+                sort = '-account__msisdn'
+
+        # by company
+        if sort_column == '5':
+            sort = 'profile__company'
+            if sort_dir_alias:
+                sort = '-profile__company'
+
+        # by position
+        if sort_column == '6':
+            sort = 'profile__position'
+            if sort_dir_alias:
+                sort = '-profile__position'
+
+        # by survey quiz
+        if sort_column == '7':
+            sort = 'survey_score'
+            if sort_dir_alias:
+                sort = '-survey_score'
+
+        # by evaluate quiz
+        if sort_column == '8':
+            sort = 'evaluate_score'
+            if sort_dir_alias:
+                sort = '-evaluate_score'
+
+        if sort:
+            queryset = queryset.order_by(sort)
 
         queryset_paginator = _PAGINATOR.paginate_queryset(queryset, request)
         serializer = UserSerializer(queryset_paginator, many=True, context=context,

@@ -36,7 +36,8 @@
                 var perPage = '{{ per_page }}';
                 var $table = $('#example').DataTable( {
                     dom: 'frtp',
-                    ordering: false,
+                    bSort: true,
+                    ordering: true,
                     stateSave: false,
                     processing: true,
                     serverSide: true,
@@ -80,6 +81,8 @@
                         data: function(data) {
                             data.offset = data.start;
                             data.keyword = data.search?.value;
+                            data.sort_column = data.order[0]?.column;
+                            data.sort_dir = data.order[0]?.dir;
                         },
                         error: function (xhr, error, code) {
                             
