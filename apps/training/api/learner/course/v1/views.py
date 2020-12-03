@@ -53,9 +53,9 @@ class CourseApiView(viewsets.ViewSet):
             year = today.strftime('%Y')
             month = today.strftime('%m')
             day_start, day_end = monthrange(int(year), int(month))
-            date_end = parser.parse('{}-{}-{}'.format(year, month, day_end))
+            date_end = parser.parse('{}-{}-{}'.format(9999, month, day_end))
             date_end_format = date_end.strftime('%Y-%m-%d')
-            date_start = parser.parse('{}-{}-{}'.format(year, month, day_start))
+            date_start = parser.parse('{}-{}-{}'.format(1990, month, day_start))
             date_start_format = date_start.strftime('%Y-%m-%d')
 
             q_start_date = Q(course_session__start_date__range=(date_start_format, date_end_format))
@@ -93,7 +93,7 @@ class CourseApiView(viewsets.ViewSet):
         keyword = request.query_params.get('keyword', None)
         category_uuid = request.query_params.get('category_uuid', None)
 
-        queryset = self.queryset(start_date=start_date)
+        queryset = self.queryset(start_date=start_date).order_by('-create_date')
         
         if keyword:
             queryset = queryset.filter(label__icontains=keyword)
