@@ -186,13 +186,13 @@ class UserSerializer(DynamicFieldsModelSerializer, serializers.ModelSerializer):
                 self.fields['email'].validators.extend([EmailDuplicateValidator()])
 
     def get_survey_score(self, obj):
-        if obj.total_survey_question:
+        if hasattr(obj, 'total_survey_question') and obj.total_survey_question:
             quiz_survey_score = int(100 /  obj.total_survey_question * obj.quiz_survey_true_answer)
             return quiz_survey_score
         return 0
 
     def get_evaluate_score(self, obj):
-        if obj.total_evaluate_question:
+        if hasattr(obj, 'total_evaluate_question') and obj.total_evaluate_question:
             quiz_evaluate_score = int(100 /  obj.total_evaluate_question * obj.quiz_evaluate_true_answer)
             return quiz_evaluate_score
         return 0
