@@ -194,6 +194,12 @@ class UserApiView(viewsets.ViewSet):
         if sort_dir == 'desc':
             sort_dir_alias = '-'
 
+        # by id
+        if sort_column == '0':
+            sort = 'id'
+            if sort_dir_alias:
+                sort = '-id'
+
         # by first_name
         if sort_column == '1':
             sort = 'first_name'
