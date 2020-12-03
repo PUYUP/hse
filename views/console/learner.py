@@ -1,3 +1,4 @@
+from django.db.models.expressions import OuterRef, Subquery
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.views import View
@@ -9,6 +10,8 @@ from utils.generals import get_model
 from utils.pagination import Pagination
 
 User = get_model('person', 'User')
+Simulation = get_model('training', 'Simulation')
+Quiz = get_model('training', 'Quiz')
 
 
 class LearnerView(View):
@@ -16,16 +19,40 @@ class LearnerView(View):
     context = {}
 
     def get(self, request):
+        quiz = Quiz.objects \
+            .filter(simulation_quiz__simulation__uuid=OuterRef('uuid')) \
+            .annotate(
+                true_answer_survey=Count(
+                    'simulation_quiz__answer',
+                    distinct=True,
+                    filter=Q(simulation_quiz__answer__is_true=True, simulation_quiz__answer__course_quiz__position='survey')
+                ),
+                true_answer_evaluate=Count(
+                    'simulation_quiz__answer',
+                    distinct=True,
+                    filter=Q(simulation_quiz__answer__is_true=True, simulation_quiz__answer__course_quiz__position='evaluate')
+                ),
+                total_survey_question=Count('quiz_question', distinct=True),
+                total_evaluate_question=Count('quiz_question', distinct=True)
+            )
+
+        simulation = Simulation.objects \
+            .annotate(
+                quiz_survey_true_answer=Subquery(quiz.filter(course_quiz__position='survey').values('true_answer_survey')[:1]),
+                quiz_evaluate_true_answer=Subquery(quiz.filter(course_quiz__position='evaluate').values('true_answer_evaluate')[:1]),
+                total_survey_question=Subquery(quiz.filter(course_quiz__position='survey').values('total_survey_question')[:1]),
+                total_evaluate_question=Subquery(quiz.filter(course_quiz__position='evaluate').values('total_evaluate_question')[:1])
+            ) \
+            .filter(learner__uuid=OuterRef('uuid')) \
+            .order_by('-quiz_survey_true_answer', '-quiz_evaluate_true_answer')
+
         queryset = User.objects.prefetch_related('account', 'profile') \
             .annotate(
-                enroll_count=Count('enroll', distinct=True),
                 simulation_count=Count('simulation', distinct=True),
-                answer_count=Count('simulation__answer', distinct=True),
-                answer_count_survey=Count(
-                    'simulation__answer', 
-                    distinct=True,
-                    filter=Q(simulation__answer__is_true=True) & Q(simulation__answer__course_quiz__position='survey')
-                )
+                quiz_survey_true_answer=Subquery(simulation.values('quiz_survey_true_answer')[:1]),
+                quiz_evaluate_true_answer=Subquery(simulation.values('quiz_evaluate_true_answer')[:1]),
+                total_survey_question=Subquery(simulation.values('total_survey_question')[:1]),
+                total_evaluate_question=Subquery(simulation.values('total_evaluate_question')[:1])
             ) \
             .select_related('account', 'profile')
         

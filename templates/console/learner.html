@@ -29,11 +29,11 @@
                     <td>{{ item.profile.company }}</td>
                     <td>{{ item.profile.position }}</td>
                     <td>
-                        enroll_count: {{ item.enroll_count }} <br />
                         simulation_count: {{ item.simulation_count }} <br />
-                        answer_count: {{ item.answer_count }} <br />
-                        answer_count_survey: {{ item.answer_count_survey }} <br />
-                        answer_count_evaluate: {{ item.answer_count_evaluate }}
+                        quiz_survey_true_answer: {{ item.quiz_survey_true_answer }} <br />
+                        evaluate_answer_count: {{ item.evaluate_answer_count }} <br />
+                        evaluate_question_count: {{ item.evaluate_question_count }} <br />
+                        total_survey_question: {{ item.total_survey_question }}
                     </td>
                     <td></td>
                     <td><a href="{% url 'learner_detail' item.uuid %}" class="btn btn-sm btn-warning">Detail</a></td>

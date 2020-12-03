@@ -213,23 +213,25 @@ class EnrollSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         enroll_session = validated_data.pop('enroll_session', None)
         instance, _created = Enroll.objects.get_or_create(**validated_data)
+        has_undone_simulation = instance.simulation.filter(is_done=False).exists()
 
         # Create enroll_session
-        for item in enroll_session:
-            enroll_session_obj, created = EnrollSession.objects.get_or_create(enroll=instance, **item)
+        if not has_undone_simulation:
+            for item in enroll_session:
+                enroll_session_obj, created = EnrollSession.objects.get_or_create(enroll=instance, **item)
 
-            if enroll_session_obj and not created:
-                learner = instance.learner
-                course = instance.course
-                course_session = enroll_session_obj.course_session
+                if enroll_session_obj and not created:
+                    learner = instance.learner
+                    course = instance.course
+                    course_session = enroll_session_obj.course_session
 
-                simulation, _simulation_is_created = Simulation.objects \
-                    .get_or_create(learner=learner, course=course, course_session=course_session,
-                                   enroll=instance, enroll_session=enroll_session_obj, is_done=False)
+                    simulation, _simulation_is_created = Simulation.objects \
+                        .get_or_create(learner=learner, course=course, course_session=course_session,
+                                    enroll=instance, enroll_session=enroll_session_obj, is_done=False)
 
-                # Simulation quiz survey
-                course_quiz = CourseQuiz.objects.get(course__id=course.id, position='survey')
-                SimulationQuiz.objects.create(simulation=simulation, course=course, course_quiz=course_quiz,
-                                            quiz=course_quiz.quiz)
+                    # Simulation quiz survey
+                    course_quiz = CourseQuiz.objects.get(course__id=course.id, position='survey')
+                    SimulationQuiz.objects.create(simulation=simulation, course=course, course_quiz=course_quiz,
+                                                quiz=course_quiz.quiz)
 
         return instance

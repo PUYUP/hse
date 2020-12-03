@@ -110,7 +110,7 @@ class SimulationApiView(viewsets.ViewSet):
             .prefetch_related('learner', 'enroll', 'enroll_session', 'course', 'course__chapter', 'course_session') \
             .select_related('learner', 'enroll', 'enroll_session', 'course', 'course_session') \
             .annotate(
-                chapter_done_count=Count('simulation_chapter', distinct=True),
+                chapter_done_count=Count('simulation_chapter', distinct=True, filter=Q(simulation_chapter__is_done=True)),
                 chapter_total_count=Count('course__chapter', distinct=True)
             ) \
             .filter(learner__id=self.request.user.id)
