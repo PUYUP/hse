@@ -20,7 +20,7 @@ def handle_upload_material(instance, file):
 
         instance.mime = mime
         instance.media.save('%s%s' % (name, ext), file, save=False)
-        instance.save(update_fields=['media'])
+        instance.save(update_fields=['media', 'mime'])
 
 
 class ChapterSerializer(serializers.ModelSerializer):

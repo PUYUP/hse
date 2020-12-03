@@ -4,7 +4,7 @@ from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.views import View
 from django.shortcuts import render
 from django.conf import settings
-from django.db.models import Count, Q
+from django.db.models import Count, Q, F
 
 from utils.generals import get_model
 from utils.pagination import Pagination
@@ -54,7 +54,8 @@ class LearnerView(View):
                 total_survey_question=Subquery(simulation.values('total_survey_question')[:1]),
                 total_evaluate_question=Subquery(simulation.values('total_evaluate_question')[:1])
             ) \
-            .select_related('account', 'profile')
+            .select_related('account', 'profile') \
+            .order_by('-quiz_evaluate_true_answer', '-quiz_survey_true_answer')
         
         page_num = int(self.request.GET.get('p', 0))
         paginator = Paginator(queryset, settings.PAGINATION_PER_PAGE)
