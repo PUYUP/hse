@@ -82,7 +82,7 @@ class UserApiView(viewsets.ViewSet):
     permission_classes = (AllowAny,)
     permission_action = {
         'list': [IsAuthenticated, IsAdminUser],
-        'retrieve': [IsAuthenticated, IsAdminUser],
+        'retrieve': [IsAuthenticated, IsCurrentUserOrReject],
         'partial_update': [IsAuthenticated, IsCurrentUserOrReject],
     }
 
