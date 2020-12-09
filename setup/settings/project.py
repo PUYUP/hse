@@ -29,7 +29,6 @@ STRICT_MSISDN_VERIFIED = False
 STRICT_MSISDN_DUPLICATE = True
 
 LOGOUT_REDIRECT_URL = '/'
-LOGIN_URL = '/person/login/'
 
 
 # Application definition
