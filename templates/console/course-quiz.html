@@ -32,15 +32,15 @@
                                 <div class="choice-{{ forloop.counter }}" data-choice-uuid="{{ c.uuid }}">
                                     <div class="d-flex w-full">
                                         <div class="form-group" style="width: 50px;">
-                                            <input type="text" class="form-control text-center identifier" name="choice-identifier[{{ forloop.counter }}]" value="{{ c.identifier }}" disabled>
+                                            <input type="text" class="form-control text-center identifier" name="choice-identifier[{{ item.uuid }}-{{ forloop.counter }}]" value="{{ c.identifier }}" disabled>
                                         </div>
 
                                         <div class="form-group ml-3" style="width: 50px;">
-                                            <input type="radio" id="is-true-{{ forloop.parentloop.counter }}" class="form-control text-center is-true" name="choice-is-true[{{ forloop.parentloop.counter }}]" {% if c.is_true %}checked{% endif %}>
+                                            <input type="radio" id="is-true-{{ forloop.parentloop.counter }}" class="form-control text-center is-true" name="choice-is-true[{{ item.uuid }}-{{ forloop.parentloop.counter }}]" {% if c.is_true %}checked{% endif %}>
                                         </div>
 
                                         <div class="form-group pl-3 w-100">
-                                            <input type="text" class="form-control answer" name="choice-label[{{ forloop.counter }}]" value="{{ c.label }}" placeholder="Answer...">
+                                            <input type="text" class="form-control answer" name="choice-label[{{ item.uuid }}-{{ forloop.counter }}]" value="{{ c.label }}" placeholder="Answer...">
                                         </div>
                                     </div>
                                 </div>
@@ -361,6 +361,12 @@
                             if (quizQuestion.length > 0) {
                                 saveQuizQuestion(quizQuestion);
                             }
+
+                            Swal.fire(
+                                'Informasi',
+                                'Berhasil disimpan. Menyegarkan...',
+                                'success'
+                            );
                         {% endif %}
                     }
                 });
@@ -468,7 +474,8 @@
                             'success'
                         );
 
-                        window.location.reload();
+                        window.history.back();
+                        // window.location.reload();
                     }
                 });
             }
@@ -496,7 +503,8 @@
                             'success'
                         );
 
-                        window.location.reload();
+                        window.history.back();
+                        // window.location.reload();
                     }
                 });
             }

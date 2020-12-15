@@ -73,7 +73,6 @@
                     sequentialUploads: true,
                     add: function (e, data) {    
                         var fname = data?.files[0].name;
-
                         file_changed = true;
 
                         $(e.target).closest('.form-group').find('#filename').html(`<p class="mt-2 mb-0">${fname}`);
