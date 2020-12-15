@@ -16,9 +16,9 @@ Material = get_model('training', 'Material')
 def handle_upload_material(instance, file):
     if instance and file:
         name, ext = os.path.splitext(file.name)
-        mime = magic.from_buffer(file.read(), mime=True)
+        # mime = magic.from_buffer(file.read(), mime=True)
 
-        instance.mime = mime
+        instance.mime = ext
         instance.media.save('%s%s' % (name, ext), file, save=False)
         instance.save(update_fields=['media', 'mime'])
 
