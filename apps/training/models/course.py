@@ -137,11 +137,13 @@ class AbstractMaterial(models.Model):
     def __str__(self):
         return self.chapter.label
 
+    """
     def save(self, *args, **kwargs):
         if self.media:
             mime = magic.from_buffer(self.media.read(), mime=True)
             self.mime = mime
         super().save(*args, **kwargs)
+    """
 
 
 class AbstractCourseQuiz(models.Model):

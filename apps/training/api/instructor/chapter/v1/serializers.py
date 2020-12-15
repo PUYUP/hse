@@ -16,6 +16,7 @@ def handle_upload_material(instance, file):
     if instance and file:
         name, ext = os.path.splitext(file.name)
 
+        instance.mime = ext
         instance.media.save('%s%s' % (name, ext), file, save=False)
         instance.save(update_fields=['media', 'mime'])
 
@@ -44,8 +45,6 @@ class ChapterSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         request = self.context.get('request')
         file = request.FILES.get('file')
-
-        print(file, 'XXXXX')
 
         for key, value in validated_data.items():
             if hasattr(instance, key):
