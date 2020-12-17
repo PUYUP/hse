@@ -18,7 +18,7 @@ Simulation = get_model('training', 'Simulation')
 SimulationChapter = get_model('training', 'SimulationChapter')
 SimulationQuiz = get_model('training', 'SimulationQuiz')
 Answer = get_model('training', 'Answer')
-Certificate = get_model('training', 'Certificate')
+SimulationAttachment = get_model('training', 'SimulationAttachment')
 
 from .forms import ChoiceInlineForm
 
@@ -91,4 +91,4 @@ admin.site.register(Simulation)
 admin.site.register(SimulationChapter)
 admin.site.register(SimulationQuiz)
 admin.site.register(Answer)
-admin.site.register(Certificate)
+admin.site.register(SimulationAttachment)

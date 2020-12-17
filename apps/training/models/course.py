@@ -175,25 +175,3 @@ class AbstractCourseQuiz(models.Model):
 
     def __str__(self):
         return self.course.label
-
-
-class AbstractCertificate(models.Model):
-    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    create_date = models.DateTimeField(auto_now_add=True, null=True)
-    update_date = models.DateTimeField(auto_now=True, null=True)
-
-    learner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
-                                related_name='certificate')
-    course = models.ForeignKey('training.Course', on_delete=models.SET_NULL,
-                               null=True, related_name='certificate')
-    media = models.FileField(max_length=500, upload_to='certificate')
-
-    class Meta:
-        abstract = True
-        app_label = 'training'
-        ordering = ['-create_date']
-        verbose_name = _("Certificate")
-        verbose_name_plural = _("Certificates")
-
-    def __str__(self):
-        return self.learner.username

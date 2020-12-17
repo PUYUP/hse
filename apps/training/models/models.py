@@ -152,9 +152,9 @@ if not is_model_registered('training', 'Answer'):
 
 
 # 17
-if not is_model_registered('training', 'Certificate'):
-    class Certificate(AbstractCertificate):
-        class Meta(AbstractCertificate.Meta):
-            db_table = 'training_certificate'
+if not is_model_registered('training', 'SimulationAttachment'):
+    class SimulationAttachment(AbstractSimulationAttachment):
+        class Meta(AbstractSimulationAttachment.Meta):
+            db_table = 'training_simulation_attachment'
 
-    __all__.append('Certificate')
+    __all__.append('SimulationAttachment')

@@ -1,18 +1,19 @@
 from django.db import transaction, IntegrityError
-from django.db.models import Count, Q, F, Value
+from django.db.models import Count, Q, F, OuterRef, Subquery
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from django.db.models.fields import BooleanField
 from django.views.decorators.cache import never_cache
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
+from django.urls import reverse
 
 from rest_framework import viewsets, status as response_status
 from rest_framework.exceptions import NotAcceptable
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import LimitOffsetPagination
+from rest_framework.decorators import action
 
-from utils.generals import get_model
+from utils.generals import get_model, make_cert
 from utils.pagination import build_result_pagination
 
 from .serializers import (
@@ -25,6 +26,8 @@ Enroll = get_model('training', 'Enroll')
 Simulation = get_model('training', 'Simulation')
 SimulationChapter = get_model('training', 'SimulationChapter')
 SimulationQuiz = get_model('training', 'SimulationQuiz')
+SimulationAttachment = get_model('training', 'SimulationAttachment')
+Quiz = get_model('training', 'Quiz')
 
 # Define to avoid used ...().paginate__
 _PAGINATOR = LimitOffsetPagination()
@@ -189,6 +192,85 @@ class SimulationApiView(viewsets.ViewSet):
         queryset.delete()
         return Response({'detail': _("Delete success!")},
                         status=response_status.HTTP_204_NO_CONTENT)
+
+    # Sub-action create certificate
+    @method_decorator(never_cache)
+    @transaction.atomic
+    @action(methods=['post'], detail=True, permission_classes=[IsAuthenticated],
+            url_path='generate-certificate', url_name='generate_certificate')
+    def generate_certificate(self, request, uuid=None):
+        quiz = Quiz.objects \
+            .filter(simulation_quiz__simulation__uuid=OuterRef('uuid')) \
+            .annotate(
+                true_answer_survey=Count(
+                    'simulation_quiz__answer',
+                    distinct=True,
+                    filter=Q(simulation_quiz__answer__is_true=True, simulation_quiz__answer__course_quiz__position='survey')
+                ),
+                true_answer_evaluate=Count(
+                    'simulation_quiz__answer',
+                    distinct=True,
+                    filter=Q(simulation_quiz__answer__is_true=True, simulation_quiz__answer__course_quiz__position='evaluate')
+                ),
+                total_survey_question=Count('quiz_question', distinct=True),
+                total_evaluate_question=Count('quiz_question', distinct=True)
+            )
+        
+        simulation_obj = Simulation.objects.prefetch_related('course', 'enroll') \
+            .select_related('course', 'enroll') \
+            .annotate(
+                quiz_survey_true_answer=Subquery(quiz.filter(course_quiz__position='survey').values('true_answer_survey')[:1]),
+                quiz_evaluate_true_answer=Subquery(quiz.filter(course_quiz__position='evaluate').values('true_answer_evaluate')[:1]),
+                total_survey_question=Subquery(quiz.filter(course_quiz__position='survey').values('total_survey_question')[:1]),
+                total_evaluate_question=Subquery(quiz.filter(course_quiz__position='evaluate').values('total_evaluate_question')[:1])
+            ) \
+            .get(uuid=uuid)
+        
+        quiz_survey_score = 0
+        quiz_evaluate_score = 0
+
+        if simulation_obj.total_survey_question:
+            quiz_survey_score = int(100 /  simulation_obj.total_survey_question * simulation_obj.quiz_survey_true_answer)
+
+        if simulation_obj.total_evaluate_question:
+            quiz_evaluate_score = int(100 /  simulation_obj.total_evaluate_question * simulation_obj.quiz_evaluate_true_answer)
+
+        d = {
+            'total_survey_question': simulation_obj.total_survey_question,
+            'total_evaluate_question': simulation_obj.total_evaluate_question,
+            'quiz_survey_true_answer': simulation_obj.quiz_survey_true_answer,
+            'quiz_evaluate_true_answer': simulation_obj.quiz_evaluate_true_answer,
+            'quiz_survey_score': quiz_survey_score,
+            'quiz_evaluate_score': quiz_evaluate_score,
+        }
+
+        certificate_obj, _created = SimulationAttachment.objects.get_or_create(simulation=simulation_obj, identifier='certificate', file='cert_file')
+        qrcode_obj, _created = SimulationAttachment.objects.get_or_create(simulation=simulation_obj, identifier='qrcode', file='qr_file')
+
+        date_fmt = simulation_obj.create_date.strftime('%A, %d %B %Y')
+        person_name = simulation_obj.learner.first_name
+        score = quiz_evaluate_score
+        course_name = simulation_obj.course.label
+        qrcode_text = request.build_absolute_uri(reverse('certificate_detail', kwargs={'uuid': certificate_obj.uuid}))
+        
+        cert = make_cert(person_name=person_name, date_fmt=date_fmt, score=str(score), course_name=course_name,
+                         qrcode_text=qrcode_text, instance=simulation_obj)
+        cert_file = cert['certificate'].split('media/')[1]
+        qr_file = cert['qrcode'].split('media/')[1]
+
+        certificate_obj.file = cert_file
+        certificate_obj.save(update_fields=['file'])
+
+        qrcode_obj.file = qr_file
+        qrcode_obj.save(update_fields=['file'])
+
+        return Response(
+            {
+                'detail': _("Certificate created!"),
+                'certificate_file': request.build_absolute_uri(certificate_obj.file.url),
+            }, 
+            status=response_status.HTTP_200_OK
+        )
 
 
 class SimulationChapterApiView(viewsets.ViewSet):

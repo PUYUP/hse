@@ -3,10 +3,11 @@ from django.urls import path
 from .console.index import ConsoleView
 from .console.learner import LearnerDetailView, LearnerView
 from .console.course import ChapterView, CourseView, CourseEditorView, CourseDetailView, CourseQuizView
-from .general import HomeView
+from .general import CertificateView, HomeView
 
 urlpatterns = [
     path('', HomeView.as_view(), name='home'),
+    path('certificate/<uuid:uuid>/', CertificateView.as_view(), name='certificate_detail'),
     path('dashboard/', ConsoleView.as_view(), name='home'),
     path('dashboard/learner/', LearnerView.as_view(), name='learner'),
     path('dashboard/learner/<uuid:uuid>/', LearnerDetailView.as_view(), name='learner_detail'),

@@ -8,3 +8,11 @@ class HomeView(View):
 
     def get(self, request):
         return render(request, self.template_name, self.context)
+
+
+class CertificateView(View):
+    template_name = 'certificate.html'
+    conteext = {}
+
+    def get(self, request, uuid=None):
+        return render(request, self.template_name, self.context)

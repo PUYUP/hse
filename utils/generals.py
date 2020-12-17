@@ -3,15 +3,19 @@ import json
 import random
 import string
 import importlib
+import qrcode
 
+from django.conf import settings
 from django.apps import apps
 from django.apps.config import MODELS_MODULE_NAME
 from django.core.exceptions import AppRegistryNotReady
+from django.core.serializers.json import DjangoJSONEncoder
 from django.utils.functional import Promise
 from django.utils.encoding import force_text
-from django.core.serializers.json import DjangoJSONEncoder
+from django.utils.text import slugify
 
 from rest_framework import renderers
+from PIL import Image, ImageFont, ImageDraw
 
 
 class LazyEncoder(DjangoJSONEncoder):
@@ -90,3 +94,59 @@ def create_unique_id():
 def choices_to_json(choices):
     to_dict = dict(choices)
     return json.dumps(to_dict, cls=LazyEncoder)
+
+
+FONT_PATH = '{}/{}'.format(settings.MEDIA_ROOT, r'CircularStd-Bold.woff')
+FONT_PATH_BLACK = '{}/{}'.format(settings.MEDIA_ROOT, r'CircularStd-Black.woff')
+FONT_PATH_MEDIUM = '{}/{}'.format(settings.MEDIA_ROOT, r'CircularStd-Medium.woff')
+CERTIFICATE_TEMPLATE = '{}/{}'.format(settings.MEDIA_ROOT, r'certificate-template.jpg')
+
+FONT_FILE = ImageFont.truetype(FONT_PATH, 225)
+FONT_FILE_DATE = ImageFont.truetype(FONT_PATH_MEDIUM, 65)
+FONT_FILE_SCORE = ImageFont.truetype(FONT_PATH_BLACK, 95)
+FONT_FILE_COURSE = ImageFont.truetype(FONT_PATH_BLACK, 90)
+FONT_COLOR = '#194E9C'
+FONT_COLOR_COURSE = '#DB2930'
+WIDTH, HEIGHT = 3508, 2481
+
+def make_cert(person_name=None, date_fmt=None, score=None, course_name=None, qrcode_text=None, instance=None):
+    image_source = Image.open(CERTIFICATE_TEMPLATE)
+    draw = ImageDraw.Draw(image_source)
+    qr = qrcode.QRCode(
+        version=None,
+        error_correction=qrcode.constants.ERROR_CORRECT_H,
+        box_size=9,
+        border=2,
+    )
+
+    qr.add_data(qrcode_text)
+    qr.make(fit=False)
+    qr_img = qr.make_image(fill_color="black", back_color="white").convert('RGB')
+
+    qr_folder = '{}/{}/{}'.format(settings.MEDIA_ROOT, 'qrcode', slugify('qrcode-' + person_name + course_name) + '.jpg')
+    qr_img.save(qr_folder)
+
+    # Person name
+    name_width, name_height = draw.textsize(person_name, font=FONT_FILE)
+    draw.text((325, 1575), person_name, fill=FONT_COLOR, font=FONT_FILE)
+    
+    # Issue date
+    date_width, date_height = draw.textsize(date_fmt, font=FONT_FILE_DATE)
+    draw.text((325, 2150), date_fmt, fill=FONT_COLOR, font=FONT_FILE_DATE)
+
+    # Score
+    score_width, score_height = draw.textsize(score, font=FONT_FILE_SCORE)
+    draw.text((3120, 2100), score, fill=FONT_COLOR, font=FONT_FILE_SCORE)
+
+    # Course
+    course_width, course_height = draw.textsize(course_name, font=FONT_FILE_COURSE)
+    draw.text((325, 2035), course_name, fill=FONT_COLOR_COURSE, font=FONT_FILE_COURSE)
+
+    certficiate_folder = '{}/{}/{}'.format(settings.MEDIA_ROOT, 'certificate', slugify(person_name + '-' + course_name) + '.jpg')
+    image_source.paste(qr_img, (2760, 1555))
+    image_source.save(certficiate_folder)
+
+    return {
+        'certificate': certficiate_folder,
+        'qrcode': qr_folder,
+    }

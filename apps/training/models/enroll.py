@@ -1,10 +1,19 @@
 import uuid
+import os
 
 from django.db import models
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
 from ..utils.constants import EVALUATE, SURVEY
+
+
+def get_upload_path(instance, filename):
+    path_name = 'certificate'
+    if instance.identifier == 'qrcode':
+        path_name = 'qrcode'
+
+    return os.path.join(path_name, filename)
 
 
 class AbstractEnroll(models.Model):
@@ -101,6 +110,35 @@ class AbstractSimulation(models.Model):
             self.repeated = old_objs.count() + 1
 
         super().save(*args, **kwargs)
+
+
+class AbstractSimulationAttachment(models.Model):
+    QRCODE = 'qrcode'
+    CERTIFICATE = 'certificate'
+    IDENTIFIER_CHOICES = (
+        (QRCODE, _("QR Code")),
+        (CERTIFICATE, _("Certificate")),
+    )
+
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    create_date = models.DateTimeField(auto_now_add=True, null=True)
+    update_date = models.DateTimeField(auto_now=True, null=True)
+
+    simulation = models.ForeignKey('training.Simulation', on_delete=models.CASCADE,
+                                   related_name='simulation_attachment')
+    
+    identifier = models.CharField(choices=IDENTIFIER_CHOICES, max_length=15)
+    file = models.FileField(max_length=500, upload_to=get_upload_path)
+
+    class Meta:
+        abstract = True
+        app_label = 'training'
+        ordering = ['-create_date']
+        verbose_name = _("Simulation Attachment")
+        verbose_name_plural = _("Simulation Attachments")
+
+    def __str__(self):
+        return self.simulation.learner.username
 
 
 class AbstractSimulationChapter(models.Model):
