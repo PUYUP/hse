@@ -7,4 +7,8 @@ __pycache__
 !**/migrations/__init__.py
 /.metadata/
 **/media/**
+!**/media/certificate-template.jpg
+!**/media/CircularStd-Black.woff
+!**/media/CircularStd-Bold.woff
+!**/media/CircularStd-Medium.woff
 DEPLOYMENT
