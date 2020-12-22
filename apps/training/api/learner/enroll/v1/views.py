@@ -266,6 +266,7 @@ class SimulationApiView(viewsets.ViewSet):
 
         return Response(
             {
+                'uuid': certificate_obj.uuid,
                 'detail': _("Certificate created!"),
                 'certificate_file': request.build_absolute_uri(certificate_obj.file.url),
             }, 
