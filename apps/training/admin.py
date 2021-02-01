@@ -43,6 +43,11 @@ class CourseSessionInline(admin.StackedInline):
     model = CourseSession
 
 
+class CategoryExtend(admin.ModelAdmin):
+    model = Category
+    exclude = ['creator']
+
+
 class CourseExtend(admin.ModelAdmin):
     model = Course
     inlines = [ChapterInline, CourseSessionInline,]
@@ -81,7 +86,7 @@ admin.site.register(Question, QuestionExtend)
 admin.site.register(Choice)
 admin.site.register(Quiz)
 admin.site.register(QuizQuestion)
-admin.site.register(Category)
+admin.site.register(Category, CategoryExtend)
 admin.site.register(Course, CourseExtend)
 admin.site.register(Chapter, ChapterExtend)
 admin.site.register(Material)

@@ -86,7 +86,8 @@ class CourseApiView(viewsets.ViewSet):
                 is_enrolled=Exists(enroll_obj),
                 last_simulation_uuid=Subquery(simulation.values('uuid')[:1])
             ) \
-            .filter(is_active=True, course_session_count__gt=0)
+            .filter(is_active=True, course_session_count__gt=0,
+                    course_quiz__isnull=False, chapter__isnull=False)
     
         return qs
 
