@@ -42,6 +42,8 @@ class CourseApiView(viewsets.ViewSet):
             year = dt.strftime('%Y')
             month = dt.strftime('%m')
             day_start, day_end = monthrange(int(year), int(month))
+            day_start += 1
+            
             date_end = parser.parse('{}-{}-{}'.format(year, month, day_end))
             date_end_format = date_end.strftime('%Y-%m-%d')
 
@@ -49,10 +51,11 @@ class CourseApiView(viewsets.ViewSet):
             q_course_session = Q(start_date__range=(dt_format, date_end_format))
         else:
             today = timezone.datetime.today()
-            today_fmt = today.strftime('%Y-%m-%d')
             year = today.strftime('%Y')
             month = today.strftime('%m')
             day_start, day_end = monthrange(int(year), int(month))
+            day_start += 1
+
             date_end = parser.parse('{}-{}-{}'.format(9999, month, day_end))
             date_end_format = date_end.strftime('%Y-%m-%d')
             date_start = parser.parse('{}-{}-{}'.format(1990, month, day_start))
